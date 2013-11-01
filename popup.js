@@ -9,14 +9,23 @@ function awesome() {
 }
 
 function validateUrl(url) {
-    return true;
+    // only fetch http or https
+    return url.indexOf("http") == 0;
+}
+
+function downloadUrl(url) {
+    chrome.downloads.download({
+        "url":url
+        });
 }
 
 function onScriptExecuted(results)
 {
     var myresult = results[0]
     for(var i = 0;i < myresult.length;++i) {
-        console.log(myresult[i])
+        if(validateUrl(myresult[i])){
+            downloadUrl(myresult[i])
+        }
     }
 }
 
