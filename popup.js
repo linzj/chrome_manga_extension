@@ -3,16 +3,21 @@ function awesome() {
   chrome.tabs.getCurrent(function (tab){
       chrome.tabs.executeScript(undefined,
       {
-          "code": " \
-          var imgs = document.querySelectorAll('img'); \
-          for (var i = 0;i < imgs.length;++i) \
-          { \
-              var img = imgs.item(i); \
-              console.log(\"img width =\" + img.src ); \
-          } \
-          "
-      });
+          "file": "injectCode.js"
+      },onScriptExecuted);
   });
+}
+
+function validateUrl(url) {
+    return true;
+}
+
+function onScriptExecuted(results)
+{
+    var myresult = results[0]
+    for(var i = 0;i < myresult.length;++i) {
+        console.log(myresult[i])
+    }
 }
 
 function totallyAwesome() {
