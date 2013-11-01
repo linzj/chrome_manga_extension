@@ -1,6 +1,17 @@
 function awesome() {
   // Do something awesome!
-  alert('shit')
+  chrome.tabs.getCurrent(function (tab){
+      chrome.tabs.executeScript(undefined,
+      {
+          "code": " \
+          var imgs = document.querySelectorAll('img'); \
+          for (var img in imgs) \
+          { \
+              console.log(\"img url = \" + img.src); \
+          } \
+          "
+      });
+  });
 }
 
 function totallyAwesome() {
