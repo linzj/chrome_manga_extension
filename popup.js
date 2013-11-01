@@ -5,9 +5,10 @@ function awesome() {
       {
           "code": " \
           var imgs = document.querySelectorAll('img'); \
-          for (var img in imgs) \
+          for (var i = 0;i < imgs.length;++i) \
           { \
-              console.log(\"img url = \" + img.src); \
+              var img = imgs.item(i); \
+              console.log(\"img width =\" + img.src ); \
           } \
           "
       });
