@@ -1,45 +1,30 @@
-function awesome() {
-  // Do something awesome!
-  chrome.tabs.getCurrent(function (tab){
-      chrome.tabs.executeScript(undefined,
-      {
-          "file": "injectCode.js"
-      },onScriptExecuted);
-  });
+function Override() {
 }
-
-function validateUrl(url) {
-    // only fetch http or https
-    return url.indexOf("http") == 0;
-}
-
-function downloadUrl(url) {
-    chrome.downloads.download({
-        "url":url
+Override.prototype.override = function (overrideDetails){
+    if("codes" in overrideDetails) {
+        this.codes = overrideDetails.codes
+        var object = this
+        chrome.tabs.getCurrent(function (tab){
+            object.tabId = tab.id
+            chrome.tabs.executeScript(object.tabId,
+            {
+                "file": "overrideContentScript.js"
+            },function(results) { object.onScriptExecuted(results););
         });
-}
-
-function onScriptExecuted(results)
-{
-    var myresult = results[0]
-    for(var i = 0;i < myresult.length;++i) {
-        if(validateUrl(myresult[i])){
-            downloadUrl(myresult[i])
-        }
     }
 }
 
-function totallyAwesome() {
-  // do something TOTALLY awesome!
+Override.prototype.onScriptExecuted = function (results) {
+    var object = this
+    chrome.tabs.sendMessage(this.tabId,this.codes,function() { this.toNext(); });
 }
 
-function awesomeTask() {
-  awesome();
-  totallyAwesome();
+Override.prototype.toNext = function () {
 }
 
 function clickHandler(e) {
-  setTimeout(awesomeTask, 1000);
+    var override = new Override() 
+    override.override()
 }
 
 function main() {
