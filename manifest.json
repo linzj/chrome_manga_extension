@@ -12,6 +12,6 @@
    },
   
    "name": "Manga Crawler",
-   "permissions": [ "tabs", "http://*/*", "https://*/*","downloads" ],   
+   "permissions": [ "tabs", "http://*/*", "https://*/*" ],   
    "version": "0.1"
 }
