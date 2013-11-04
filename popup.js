@@ -1,15 +1,18 @@
 var nextPageQuery = "a.n"
 var nextPageTimeOut = 10000
+var globalScripts = ["alert","confirm"]
 
 function boot(imgArray){
     chrome.tabs.query({"active":true},function (tabs){
             var tab = tabs[0]
-            var myInstallObserver = new InstallObserver() 
+            var myInstallObserver = new InstallObserver(globalScripts) 
             myInstallObserver.installObserver(tab,imgArray)
             });
 }
 
-function InstallObserver() {
+function InstallObserver(scripts) {
+    this.scripts = scripts
+    this.hasBluntScripts = false
 }
 
 InstallObserver.prototype.installObserver = function (tab,imgArray){
@@ -21,6 +24,17 @@ InstallObserver.prototype.installObserver = function (tab,imgArray){
             if(tabId == object.tabId && changeInfo.hasOwnProperty("status") && changeInfo.status == "complete"){
                 object.nextStep()
                 chrome.tabs.onUpdated.removeListener(arguments.callee)
+            }
+            if(!object.hasBluntScripts) {
+                object.hasBluntScripts = true
+                var bluntCode = "\n" +
+                'var injectScript=function(d){var c=Math.random().toString().substr(2),a=document.createElement("script");a.id=c;a.type="text/javascript";a.innerHTML=d+";document.documentElement.removeChild(document.getElementById(\'"+c+"\'));";document.documentElement.appendChild(a)};\n' +
+                'var injectCode = \'var scripts = ' + JSON.stringify(object.scripts) + ';for(var i = 0;i < scripts.length;++i){ window[scripts[i]] = function(){console.log(\"shit\")}};alert("shit")\'\n' + 
+                'injectScript(injectCode)'
+
+                console.log('bluntCode = ' + bluntCode)
+                chrome.tabs.executeScript(this.tabId,{"allFrames":true,"code":bluntCode ,"runAt":"document_start"},function (results){ console.log(results)} )
+
             }
         });
     }

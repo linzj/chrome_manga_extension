@@ -12,5 +12,4 @@ for (var i = 0;i < imgs.length;++i)
         maxSize = size
     }
 } 
-console.log(ret)
 ret; 
