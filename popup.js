@@ -1,5 +1,5 @@
 var nextPageQuery = "a.n"
-var nextPageTimeOut = 10000
+var globalTimeout = 500
 var globalScripts = ["alert","confirm"]
 
 function boot(imgArray){
@@ -25,15 +25,13 @@ InstallObserver.prototype.installObserver = function (tab,imgArray){
                 object.nextStep()
                 chrome.tabs.onUpdated.removeListener(arguments.callee)
             }
-            if(!object.hasBluntScripts) {
+            if(!object.hasBluntScripts && object.scripts) {
                 object.hasBluntScripts = true
                 var bluntCode = "\n" +
                 'var injectScript=function(d){var c=Math.random().toString().substr(2),a=document.createElement("script");a.id=c;a.type="text/javascript";a.innerHTML=d+";document.documentElement.removeChild(document.getElementById(\'"+c+"\'));";document.documentElement.appendChild(a)};\n' +
-                'var injectCode = \'var scripts = ' + JSON.stringify(object.scripts) + ';for(var i = 0;i < scripts.length;++i){ window[scripts[i]] = function(){console.log(\"shit\")}};alert("shit")\'\n' + 
+                'var injectCode = \'var scripts = ' + JSON.stringify(object.scripts) + ';for(var i = 0;i < scripts.length;++i){ window[scripts[i]] = function(){console.log(\"shit\")}};\'\n' + 
                 'injectScript(injectCode)'
-
-                console.log('bluntCode = ' + bluntCode)
-                chrome.tabs.executeScript(this.tabId,{"allFrames":true,"code":bluntCode ,"runAt":"document_start"},function (results){ console.log(results)} )
+                chrome.tabs.executeScript(this.tabId,{"allFrames":true,"code":bluntCode ,"runAt":"document_start"})
 
             }
         });
@@ -80,7 +78,6 @@ NextPage.prototype.nextPage = function() {
     // observe the change of url
     object.listener = function (tabId,changeInfo,tab) {
         if(tabId == object.tabId && changeInfo.hasOwnProperty("status")){
-            console.log("changeInfo" + changeInfo)
             object.stopTimerAndContinue()
             chrome.tabs.onUpdated.removeListener(arguments.callee)
         }
@@ -94,7 +91,23 @@ NextPage.prototype.nextPage = function() {
 
 NextPage.prototype.startTimer = function() {
     var object = this
-    this.timerOutVar = window.setTimeout(function() { object.finish();},nextPageTimeOut)
+    // kill the old timer first
+    if(this.timerOutVar)
+        window.clearTimeout(this.timerOutVar)
+
+    this.timerOutVar = window.setTimeout(function() { object.timerFunc();},globalTimeout)
+}
+
+NextPage.prototype.timerFunc = function() {
+    var object = this
+    chrome.tabs.get(this.tabId,function(tab) {
+        if(tab.status == "loading") {
+            object.startTimer()
+        } else {
+            object.finish()
+        }
+    });
+
 }
 
 NextPage.prototype.stopTimerAndContinue = function() {
@@ -104,13 +117,23 @@ NextPage.prototype.stopTimerAndContinue = function() {
 
 NextPage.prototype.finish = function (){
     chrome.tabs.onUpdated.removeListener(this.listener)
-    for(var i = 0;i < this.imgArray.length;++i) {
-        console.log(this.imgArray[i])
-    }
+    var modifyPage = new ModifyPage(this.tabId,this.imgArray)
+    modifyPage.modify()
 }
 
+function ModifyPage(tabId,imgArray) {
+    this.tabId = tabId
+    this.imgArray = imgArray
+}
 
-
+ModifyPage.prototype.modify = function() {
+    var object = this
+    chrome.tabs.executeScript(this.tabId,{"allFrames":true,"file":"modifyInjectCode.js"},function(){
+            chrome.tabs.sendMessage(object.tabId,object.imgArray,function() {
+                // TODO:next node
+            });
+        })
+}
 
 
 
