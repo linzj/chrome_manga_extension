@@ -54,6 +54,7 @@ InstallObserver.prototype.nextStep = function () {
 function Filter(tabId,imgArray) {
     this.tabId = tabId
     this.imgArray = imgArray
+    this.urlSet = {}
 }
 
 Filter.prototype.filter = function () {
@@ -63,9 +64,15 @@ Filter.prototype.filter = function () {
 
 Filter.prototype.onScriptExecuted = function(results) {
     var result = results[0]
-    this.imgArray.push(result)
+    for(var i = 0;i < result.length;++i) {
+        var url = result[i]
+        if(this.urlSet[url])
+            continue
+        this.urlSet[url] = true
+        this.imgArray.push(url)
+        break
+    }
     this.nextStep()
-    this.onScriptExecuted = function() {console.log('trying to push url:' + result + ' twice' );}
 }
 
 Filter.prototype.nextStep = function() {
@@ -83,7 +90,7 @@ NextPage.prototype.nextPage = function() {
     var object = this
     // observe the change of url
     object.listener = function (tabId,changeInfo,tab) {
-        if(tabId == object.tabId && changeInfo.hasOwnProperty("status")){
+        if(tabId == object.tabId && changeInfo.hasOwnProperty("status") && changeInfo.status == "complete"){
             object.stopTimerAndContinue()
             chrome.tabs.onUpdated.removeListener(arguments.callee)
         }
