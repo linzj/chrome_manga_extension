@@ -10,6 +10,11 @@ function boot(imgArray){
             });
 }
 
+function start(tab,imgArray) {
+    var myInstallObserver = new InstallObserver(globalScripts) 
+    myInstallObserver.installObserver(tab,imgArray)
+}
+
 function InstallObserver(scripts) {
     this.scripts = scripts
     this.hasBluntScripts = false
@@ -113,7 +118,10 @@ NextPage.prototype.timerFunc = function() {
 
 NextPage.prototype.stopTimerAndContinue = function() {
     window.clearTimeout(this.timerOutVar)
-    boot(this.imgArray)
+    var object = this
+    chrome.tabs.get(this.tabId,function(tab) {
+        start(tab,object.imgArray);
+    });
     this.stopTimerAndContinue = function() {}
 }
 
