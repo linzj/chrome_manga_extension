@@ -5,7 +5,10 @@
       "default_icon": "images/icon48.png",
       "default_popup": "popup.html"
    },
-   "background": "background.html",
+   "background": {
+       "page": "background.html",
+       "persistent": false
+   },
    "description": "download manga using chrome",
    "icons": {
       "48": "images/icon48.png"
