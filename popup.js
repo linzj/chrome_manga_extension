@@ -1,8 +1,13 @@
 
 
 function clickHandler(e) {
+
+    var nextPageQuery = document.querySelector('#myinput').value;
+    if(!nextPageQuery) {
+        alert('must have a inempty query string')
+    }
     chrome.runtime.getBackgroundPage(function (backgroundWindow) {
-        backgroundWindow.boot([]);
+        backgroundWindow.boot([],{"nextPageQuery":nextPageQuery});
     })
     // boot([])
 }
@@ -13,4 +18,5 @@ function clickHandler(e) {
 // specific elements when it triggers.
 document.addEventListener('DOMContentLoaded', function () {
   document.querySelector('#myshit').addEventListener('click', clickHandler);
+  document.querySelector('#myinput').value = 'img#curPic'
 });

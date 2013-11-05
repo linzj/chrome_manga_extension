@@ -1,44 +1,50 @@
-var nextPageQuery = "img#curPic"
 var globalTimeout = 500
 var globalScripts = ["alert","confirm"]
 
-function boot(imgArray){
+function boot(imgArray,bootAttr){
+    if(! ("imgArray" in bootAttr)) {
+        bootAttr.imgArray = []
+    }
+    if(!("overrideScripts" in bootAttr)) {
+        bootAttr.overrideScripts = globalScripts
+    }
     chrome.tabs.query({"active":true},function (tabs){
             var tab = tabs[0]
-            var myInstallObserver = new InstallObserver(globalScripts) 
-            myInstallObserver.installObserver(tab,imgArray)
+            var myInstallObserver = new InstallObserver(bootAttr) 
+            myInstallObserver.installObserver(tab)
             });
 }
 
-function start(tab,imgArray) {
-    var myInstallObserver = new InstallObserver(globalScripts) 
-    myInstallObserver.installObserver(tab,imgArray)
+function start(tab,bootAttr) {
+    var myInstallObserver = new InstallObserver(bootAttr) 
+    myInstallObserver.installObserver(tab,bootAttr)
 }
 
-function InstallObserver(scripts) {
-    this.scripts = scripts
+function InstallObserver(bootAttr) {
+    this.bootAttr = bootAttr 
     this.hasBluntScripts = false
 }
 
-InstallObserver.prototype.installObserver = function (tab,imgArray){
+InstallObserver.prototype.installObserver = function (tab){
     this.tabId = tab.id
-    this.imgArray = imgArray
     var object = this
+
+    if(!object.hasBluntScripts && object.bootAttr.overrideScripts) {
+        object.hasBluntScripts = true
+            var bluntCode = "\n" +
+            'var injectScript=function(d){var c=Math.random().toString().substr(2),a=document.createElement("script");a.id=c;a.type="text/javascript";a.innerHTML=d+";document.documentElement.removeChild(document.getElementById(\'"+c+"\'));";document.documentElement.appendChild(a);};\n' +
+            'var injectCode = \'var scripts = ' + JSON.stringify(object.bootAttr.overrideScripts) + ';for(var i = 0;i < scripts.length;++i){ window[scripts[i]] = function(){console.log(\"shit\")}};\'\n' + 
+            'injectScript(injectCode)'
+            chrome.tabs.executeScript(this.tabId,{"allFrames":true,"code":bluntCode})
+
+    }
     if(tab.status == "loading") {
         chrome.tabs.onUpdated.addListener(function (tabId,changeInfo,tab) {
             if(tabId == object.tabId && changeInfo.hasOwnProperty("status") && changeInfo.status == "complete"){
                 object.nextStep()
                 chrome.tabs.onUpdated.removeListener(arguments.callee)
             }
-            if(!object.hasBluntScripts && object.scripts) {
-                object.hasBluntScripts = true
-                var bluntCode = "\n" +
-                'var injectScript=function(d){var c=Math.random().toString().substr(2),a=document.createElement("script");a.id=c;a.type="text/javascript";a.innerHTML=d+";document.documentElement.removeChild(document.getElementById(\'"+c+"\'));";document.documentElement.appendChild(a)};\n' +
-                'var injectCode = \'var scripts = ' + JSON.stringify(object.scripts) + ';for(var i = 0;i < scripts.length;++i){ window[scripts[i]] = function(){console.log(\"shit\")}};\'\n' + 
-                'injectScript(injectCode)'
-                chrome.tabs.executeScript(this.tabId,{"allFrames":true,"code":bluntCode ,"runAt":"document_start"})
-
-            }
+            
         });
     }
     else {
@@ -47,19 +53,19 @@ InstallObserver.prototype.installObserver = function (tab,imgArray){
 }
 
 InstallObserver.prototype.nextStep = function () {
-    filter = new Filter(this.tabId,this.imgArray)
+    filter = new Filter(this.tabId,this.bootAttr)
     filter.filter()
 }
 
-function Filter(tabId,imgArray) {
+function Filter(tabId,bootAttr) {
     this.tabId = tabId
-    this.imgArray = imgArray
+    this.bootAttr = bootAttr 
     this.urlSet = {}
 }
 
 Filter.prototype.filter = function () {
     var object = this
-    chrome.tabs.executeScript(this.tabId,{ "file":"filterInjectCode.js" },function(results) { object.onScriptExecuted(results) } )
+    chrome.tabs.executeScript(this.tabId,{ "file":"filterInjectCode.js" ,"runAt":"document_end" },function(results) { object.onScriptExecuted(results) } )
 }
 
 Filter.prototype.onScriptExecuted = function(results) {
@@ -69,20 +75,20 @@ Filter.prototype.onScriptExecuted = function(results) {
         if(this.urlSet[url])
             continue
         this.urlSet[url] = true
-        this.imgArray.push(url)
+        this.bootAttr.imgArray.push(url)
         break
     }
     this.nextStep()
 }
 
 Filter.prototype.nextStep = function() {
-    nextPage = new NextPage(this.tabId,this.imgArray)
+    nextPage = new NextPage(this.tabId,this.bootAttr)
     nextPage.nextPage()
 }
 
-function NextPage(tabId,imgArray) {
+function NextPage(tabId,bootAttr) {
     this.tabId = tabId
-    this.imgArray = imgArray
+    this.bootAttr = bootAttr 
 }
 
 
@@ -101,7 +107,7 @@ NextPage.prototype.nextPage = function() {
     }
     chrome.tabs.onUpdated.addListener(object.listener);
     chrome.tabs.executeScript(this.tabId,{ "file":"nextPageInjectCode.js"},function() {
-        chrome.tabs.executeScript(object.tabId,{"code":"___mynextPage(\"" + nextPageQuery + "\");"},function(){
+        chrome.tabs.executeScript(object.tabId,{"code":"___mynextPage(\"" + object.bootAttr.nextPageQuery + "\");","runAt":"document_end"},function(){
             object.startTimer()
         })
     })
@@ -133,27 +139,27 @@ NextPage.prototype.stopTimer = function() {
 NextPage.prototype.backToStart = function() {
     var object = this
     chrome.tabs.get(this.tabId,function(tab) {
-        start(tab,object.imgArray);
+        start(tab,object.bootAttr);
     });
     this.backToStart = function(){}
 }
 
 NextPage.prototype.finish = function (){
     chrome.tabs.onUpdated.removeListener(this.listener)
-    var modifyPage = new ModifyPage(this.tabId,this.imgArray)
+    var modifyPage = new ModifyPage(this.tabId,this.bootAttr)
     modifyPage.modify()
     this.finish = function() {}
 }
 
-function ModifyPage(tabId,imgArray) {
+function ModifyPage(tabId,bootAttr) {
     this.tabId = tabId
-    this.imgArray = imgArray
+    this.bootAttr = bootAttr 
 }
 
 ModifyPage.prototype.modify = function() {
     var object = this
     chrome.tabs.executeScript(this.tabId,{"allFrames":true,"file":"modifyInjectCode.js"},function(){
-            chrome.tabs.sendMessage(object.tabId,object.imgArray,function() {
+            chrome.tabs.sendMessage(object.tabId,object.bootAttr.imgArray,function() {
                 // TODO:next node
             });
         })
