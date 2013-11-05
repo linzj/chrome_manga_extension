@@ -90,16 +90,21 @@ NextPage.prototype.nextPage = function() {
     var object = this
     // observe the change of url
     object.listener = function (tabId,changeInfo,tab) {
-        if(tabId == object.tabId && changeInfo.hasOwnProperty("status") && changeInfo.status == "complete"){
-            object.stopTimerAndContinue()
-            chrome.tabs.onUpdated.removeListener(arguments.callee)
+        if(tabId == object.tabId && changeInfo.hasOwnProperty("status") ){
+            if(changeInfo.status == "complete"){
+                object.backToStart()
+                chrome.tabs.onUpdated.removeListener(arguments.callee)
+            } else if(changeInfo.status == "loading") {
+                object.stopTimer()
+            }
         }
     }
     chrome.tabs.onUpdated.addListener(object.listener);
     chrome.tabs.executeScript(this.tabId,{ "file":"nextPageInjectCode.js"},function() {
-        chrome.tabs.executeScript(object.tabId,{"code":"___mynextPage(\"" + nextPageQuery + "\");"})
+        chrome.tabs.executeScript(object.tabId,{"code":"___mynextPage(\"" + nextPageQuery + "\");"},function(){
+            object.startTimer()
+        })
     })
-    object.startTimer()
 }
 
 NextPage.prototype.startTimer = function() {
@@ -114,22 +119,23 @@ NextPage.prototype.startTimer = function() {
 NextPage.prototype.timerFunc = function() {
     var object = this
     chrome.tabs.get(this.tabId,function(tab) {
-        if(tab.status == "loading") {
-            object.startTimer()
-        } else {
+        if(tab.status == "complete") {
             object.finish()
         }
     });
 
 }
 
-NextPage.prototype.stopTimerAndContinue = function() {
+NextPage.prototype.stopTimer = function() {
     window.clearTimeout(this.timerOutVar)
+}
+
+NextPage.prototype.backToStart = function() {
     var object = this
     chrome.tabs.get(this.tabId,function(tab) {
         start(tab,object.imgArray);
     });
-    this.stopTimerAndContinue = function() {}
+    this.backToStart = function(){}
 }
 
 NextPage.prototype.finish = function (){
