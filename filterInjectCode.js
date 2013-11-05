@@ -18,4 +18,5 @@ imgArray.sort(sortFunc)
 for (var i = 0;i < imgs.length && i < 10;++i) { 
     ret.push(imgs[i].src)
 } 
+ret.sort()
 ret; 
