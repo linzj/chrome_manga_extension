@@ -15,8 +15,10 @@ function sortFunc(a,b) {
 
 imgArray.sort(sortFunc)
 
-for (var i = 0;i < imgs.length && i < 10;++i) { 
-    ret.push(imgs[i].src)
+for (var i = 0;i < imgs.length && i < 3;++i) { 
+    // filter out the 0 size img first
+    if(imgs[i].width > 0 && imgs[i].height > 0)
+        ret.push(imgs[i].src)
 } 
 ret.sort()
 ret; 
