@@ -2,9 +2,15 @@
 
 function clickHandler(e) {
 
-    var nextPageQuery = document.querySelector('#myinput').value;
+    var queryStringElement = document.querySelector('#queryString');
+    var nextPageQuery = queryStringElement.value;
     if(!nextPageQuery) {
         alert('must have a inempty query string')
+    }
+    if(queryStringElement.oldValue != nextPageQuery) {
+        chrome.storage.local.set({'QueryString':nextPageQuery})
+        // update the old Value
+        queryStringElement.oldValue = nextPageQuery
     }
     chrome.runtime.getBackgroundPage(function (backgroundWindow) {
         backgroundWindow.boot([],{"nextPageQuery":nextPageQuery});
@@ -17,6 +23,15 @@ function clickHandler(e) {
 // `DOMContentLoaded` event on the document, and adding your listeners to
 // specific elements when it triggers.
 document.addEventListener('DOMContentLoaded', function () {
-  document.querySelector('#myshit').addEventListener('click', clickHandler);
-  document.querySelector('#myinput').value = 'img#curPic'
+    document.querySelector('#myshit').addEventListener('click', clickHandler);
+    var queryStringElement = document.querySelector('#queryString')
+    queryStringElement.value = 'img#curPic'
+    queryStringElement.oldValue = 'img#curPic'
+    chrome.storage.local.get("QueryString",function(items) {
+        if("QueryString" in items) {
+            var queryStringElement = document.querySelector('#queryString');
+            queryStringElement.value = items.QueryString
+            queryStringElement.oldValue = items.QueryString
+        }
+    });
 });
