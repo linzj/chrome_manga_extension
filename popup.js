@@ -1,4 +1,10 @@
+var shouldClose = 0
 
+function closeWindow(){
+    if((--shouldClose) == 0) {
+        window.close()
+    }
+}
 
 function clickHandler(e) {
 
@@ -8,13 +14,16 @@ function clickHandler(e) {
         alert('must have a inempty query string')
     }
     if(queryStringElement.oldValue != nextPageQuery) {
-        chrome.storage.local.set({'QueryString':nextPageQuery})
+        chrome.storage.local.set({'QueryString':nextPageQuery},function(){closeWindow()})
+        shouldClose++
         // update the old Value
         queryStringElement.oldValue = nextPageQuery
     }
     chrome.runtime.getBackgroundPage(function (backgroundWindow) {
         backgroundWindow.boot([],{"nextPageQuery":nextPageQuery});
+        closeWindow()
     })
+    shouldClose++
     // boot([])
 }
 
