@@ -18,9 +18,8 @@ imgArray.sort(sortFunc)
 for (var i = 0;i < imgs.length && i < 3;++i) { 
     // filter out the 0 size img first
     if(imgs[i].width > 0 && imgs[i].height > 0)
-        ret.push(imgs[i].src)
+        ret.push([imgs[i].src, imgs[i].width, imgs[i].height])
     else
         break
-} 
-ret.sort()
+}
 ret; 
