@@ -60,7 +60,7 @@ InstallObserver.prototype.installObserver = function (tab) {
 
 InstallObserver.prototype.nextStep = function () {
     console.log('install Observer next step')
-    filter = new Filter(this.tabId,this.bootAttr)
+    filter = new Filter(this.tabId,this.bootAttr, false)
     filter.filter()
 }
 
@@ -70,7 +70,7 @@ InstallObserver.prototype.nextStep = function () {
 //   // any other initialization
 // }
 
-function Filter(tabId,bootAttr) {
+function Filter(tabId, bootAttr, modifyPage) {
     this.tabId = tabId
     this.bootAttr = bootAttr 
     this.urlSet = {}
@@ -78,6 +78,7 @@ function Filter(tabId,bootAttr) {
     this.filterTimes = 0
     this.timerId = -1
     this.candidatePic = null
+    this.modifyPage = modifyPage
 }
 
 Filter.prototype.filter = function () {
@@ -154,11 +155,11 @@ Filter.prototype.onScriptExecuted = function(results) {
 
         this.pushPic(result[i])
         hasFound = true
-        break
     }
+    var shouldNextStep = false
 
     if (hasFound) {
-        this.nextStep()
+        shouldNextStep = true
     }
     else if (this.filterTimes < globalFilterTimes) {
        this.timerId = setTimeout(this.filter.bind(this), globalFilterTimeout)
@@ -169,12 +170,17 @@ Filter.prototype.onScriptExecuted = function(results) {
         this.updateAverageArea(candidateArea)
         this.pushPic(this.candidatePic)
         this.candidatePic = null
-        this.nextStep()
-    } else {
+        shouldNextStep = true
+    } else if (this.modifyPage) {
         // modified this page
         var modifyPage = new ModifyPage(this.tabId,this.bootAttr)
         modifyPage.modify()
+    } else {
+        shouldNextStep = true
     }
+
+    if (shouldNextStep)
+        this.nextStep()
 }
 
 Filter.prototype.nextStep = function() {
@@ -260,7 +266,7 @@ NextPage.prototype.finish = function (){
     // var modifyPage = new ModifyPage(this.tabId,this.bootAttr)
     // modifyPage.modify()
     console.log('NextPage.finish: ' + this.uniqueId)
-    filter = new Filter(this.tabId,this.bootAttr)
+    filter = new Filter(this.tabId, this.bootAttr, true)
     filter.filter()
     this.finish = function() {}
 }
