@@ -53,6 +53,24 @@ InstallObserver.prototype.nextStep = function () {
     filter.filter()
 }
 
+function Bucket(val) {
+    this.val = val
+    this.size = 1
+}
+
+Bucket.prototype.accept = function (val) {
+    if (Math.abs(this.val - val) < this.val * 0.3) {
+        this.val = (this.val * this.size + val) / (this.size + 1)
+        this.size++
+        return true
+    }
+    return false
+}
+
+function bucketSort(a, b) {
+    return b.size - a.size
+}
+
 // Debug only. And only V8
 // function MyError() {
 //   Error.captureStackTrace(this, MyError);
@@ -71,7 +89,7 @@ function Filter(tabId, bootAttr, modifyPage) {
 }
 
 Filter.prototype.filter = function () {
-    console.log('Filter.filter ,this.timerId = ' + this.timerId)
+    var logString = 'Filter.filter, this.timerId = ' + this.timerId
     // check for empty map
     var emptySet = true
     for (var key in this.urlSet) {
@@ -79,19 +97,30 @@ Filter.prototype.filter = function () {
         break
     }
     if (emptySet && this.bootAttr.imgArray.length > 0) {
-        var sum = 0
-        for (var i = 0; i < this.bootAttr.imgArray.length; ++i) {
-            var img = this.bootAttr.imgArray[i]
-            this.urlSet[img[0]] = true
-            var width = img[1]
-            var height = img[2]
-            var area = width * height
-            sum += area
-        }
 
-        sum /= this.bootAttr.imgArray.length
-        this.areaAverage = sum
+        var buckets = []
+        for (var imgIndex in this.bootAttr.imgArray) {
+            var accepted = false
+            var img = this.bootAttr.imgArray[imgIndex]
+            var area = img[1] * img[2]
+            this.urlSet[img[0]] = true
+            for (var bucketIndex in buckets) {
+                var bucket = buckets[bucketIndex]
+                if (bucket.accept(area)) {
+                    accepted = true
+                    break
+                }
+            }
+            if (!accepted) {
+                buckets.push(new Bucket(area))
+            }
+        }
+        buckets.sort(bucketSort)
+
+        this.areaAverage = buckets[0].val
+        logString += "; this.areaAverage = " + this.areaAverage
     }
+    console.log(logString)
     chrome.tabs.executeScript(this.tabId, {"file":"filterInjectCode.js", "runAt":"document_end"}, this.onScriptExecuted.bind(this) )
 }
 
