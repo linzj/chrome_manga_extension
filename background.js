@@ -33,28 +33,17 @@ InstallObserver.prototype.installObserver = function (tab) {
     console.log('install Observer')
 
     this.tabId = tab.id
-    var object = this
 
-    if(!object.hasBluntScripts && object.bootAttr.overrideScripts) {
-        object.hasBluntScripts = true
+    if(!this.hasBluntScripts && this.bootAttr.overrideScripts) {
+        this.hasBluntScripts = true
             var bluntCode = "\n" +
             'var injectScript=function(d){var c=Math.random().toString().substr(2),a=document.createElement("script");a.id=c;a.type="text/javascript";a.innerHTML=d+";document.documentElement.removeChild(document.getElementById(\'"+c+"\'));";document.documentElement.appendChild(a);};\n' +
-            'var injectCode = \'var scripts = ' + JSON.stringify(object.bootAttr.overrideScripts) + ';for(var i = 0;i < scripts.length;++i){ window[scripts[i]] = function(){console.log(\"shit\")}};\'\n' + 
+            'var injectCode = \'var scripts = ' + JSON.stringify(this.bootAttr.overrideScripts) + ';for(var i = 0;i < scripts.length;++i){ window[scripts[i]] = function(){console.log(\"shit\")}};\'\n' + 
             'injectScript(injectCode)'
-            chrome.tabs.executeScript(this.tabId,{"allFrames" : true, "code" : bluntCode})
+            chrome.tabs.executeScript(this.tabId, {"allFrames" : true, "code" : bluntCode}, function () {
+                    this.nextStep();
+            }.bind(this))
 
-    }
-    if(tab.status == "loading") {
-        chrome.tabs.onUpdated.addListener(function (tabId,changeInfo,tab) {
-            if(tabId == object.tabId && changeInfo.hasOwnProperty("status") && changeInfo.status == "complete"){
-                object.nextStep()
-                chrome.tabs.onUpdated.removeListener(arguments.callee)
-            }
-            
-        });
-    }
-    else {
-        object.nextStep();
     }
 }
 
@@ -103,7 +92,7 @@ Filter.prototype.filter = function () {
         sum /= this.bootAttr.imgArray.length
         this.areaAverage = sum
     }
-    chrome.tabs.executeScript(this.tabId, {"file":"filterInjectCode.js", "runAt":"document_end"}, function(results) { this.onScriptExecuted(results) }.bind(this) )
+    chrome.tabs.executeScript(this.tabId, {"file":"filterInjectCode.js", "runAt":"document_end"}, this.onScriptExecuted.bind(this) )
 }
 
 Filter.prototype.updateAverageArea = function (area) {
@@ -125,6 +114,10 @@ Filter.prototype.pushPic = function (img) {
 }
 
 Filter.prototype.onScriptExecuted = function(results) {
+    // the tab may be closed
+    if (typeof results == 'undefined')
+        return
+
     var result = results[0]
     var hasFound = false
     for(var i = 0; i < result.length; ++i) {
