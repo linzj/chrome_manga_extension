@@ -2,8 +2,9 @@
 chrome.runtime.onMessage.addListener(function (message,sender,sendRespond) {
     var html = document.documentElement;
     // clear the child
-    for(var i = 0 ;i < html.childNodes.length;++i) {
-        html.removeChild(html.childNodes[i])
+    var childNodesSize = html.childNodes.length;
+    for(var i = 0; i < childNodesSize; ++i) {
+        html.removeChild(html.childNodes[0])
     }
     // create head node
     var head = document.createElement('head')
@@ -20,7 +21,7 @@ chrome.runtime.onMessage.addListener(function (message,sender,sendRespond) {
     var body = document.createElement('body')
     html.appendChild(body)
     // append img node 
-    for(var i = 0;i < message.length;++i) {
+    for(var i = 0; i < message.length; ++i) {
         var url = message[i]
         var img = document.createElement('img')
         img.src = url
