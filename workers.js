@@ -29,7 +29,7 @@ InstallObserver.prototype = {
             return;
         console.log('install Observer next step')
         this.hasNextStep = true
-        controller.nextStep()
+        this.controller.nextStep()
     }
 }
 
@@ -162,8 +162,9 @@ Filter.prototype = {
         if (hasFound) {
             shouldNextStep = true
         }
-        else if (this.filterTimes < globalFilterTimes) {
-           this.timerId = setTimeout(this.filter.bind(this), globalFilterTimeout)
+        else if (this.filterTimes < this.controller.globalFilterTimes) {
+           // we got nothing.
+           this.timerId = setTimeout(this.filter.bind(this), this.controller.globalFilterTimeout)
            this.filterTimes++
         } else if (this.candidatePic !== null) {
             console.log('choosen candidatePic: ' + this.candidatePic)
@@ -173,8 +174,10 @@ Filter.prototype = {
             this.candidatePic = null
             shouldNextStep = true
         } else {
-            this.controller.filterDrained()
+            shouldNextStep = true
         }
+        if (shouldNextStep)
+            this.nextStep()
     },
     nextStep : function() {
         console.assert(!this.hasNextStep)
@@ -232,7 +235,7 @@ NextPage.prototype = {
         if(this.timerOutVar)
             window.clearTimeout(this.timerOutVar)
         console.log('NextPage.startTimer: ' + this.uniqueId)
-        this.timerOutVar = window.setTimeout(function() { this.timerFunc();}.bind(this), globalTimeout)
+        this.timerOutVar = window.setTimeout(function() { this.timerFunc();}.bind(this), this.controller.globalTimeout)
     },
     timerFunc : function() {
         var object = this

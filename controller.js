@@ -4,17 +4,19 @@ var globalFilterTimes = 10
 var globalFilterTimeout = 500
 
 function TabController() {
-    this.state = NOT_STARTED
-    this.oldState = NOT_STARTED
+    this.state = this.NOT_STARTED
+    this.oldState = this.NOT_STARTED
     this.tabId = 0
     this.bootAttr = null
+    this.globalFilterTimeout = globalFilterTimeout
+    this.globalTimeout =globalTimeout
 }
 
 TabController.prototype = {
     changeState : function (newState) {
         this.oldState = this.state
         this.state = newState
-    }
+    },
     boot : function (bootAttr) {
         console.log('boot called')
         if (!("imgArray" in bootAttr)) {
@@ -36,7 +38,7 @@ TabController.prototype = {
     restart : function () {
         console.log('restart called ')
         this.changeState(this.INSTALL_OBSERVER)
-        var myInstallObserver = new InstallObserver(this.bootAttr, this, tab.id) 
+        var myInstallObserver = new InstallObserver(this.bootAttr, this, this.tabId)
         myInstallObserver.installObserver()
     },
     nextStep : function() {
@@ -50,15 +52,13 @@ TabController.prototype = {
                 filter.filter()
                 break
             case this.FILTER:
-                this.changeState(this.NEXT_PAGE)
-                nextPage = new NextPage(this.tabId, this.bootAttr, this)
-                nextPage.nextPage()
+                this.filterDrained()
                 break
             case this.NEXT_PAGE:
-                this.changeState(NOT_STARTED)
+                this.changeState(this.NOT_STARTED)
                 chrome.tabs.get(this.tabId,function(tab) {
                     this.tabId = tab.id
-                    this.restart(tab);
+                    this.restart();
                 }.bind(this));
                 break
             case this.MODIFY_PAGE:
@@ -68,12 +68,16 @@ TabController.prototype = {
     },
     filterDrained : function () {
         console.assert(this.oldState === this.INSTALL_OBSERVER || this.oldState === this.NEXT_PAGE)
+        console.log('TabController.filterDrained!')
         switch (this.oldState) {
             case this.INSTALL_OBSERVER:
                 // Comes from install observer, just go next page.
-                this.nextStep()
+                this.changeState(this.NEXT_PAGE)
+                nextPage = new NextPage(this.tabId, this.bootAttr, this)
+                nextPage.nextPage()
                 break
             case this.NEXT_PAGE:
+                this.changeState(this.MODIFY_PAGE)
                 var modifyPage = new ModifyPage(this.tabId,this.bootAttr, this)
                 modifyPage.modify()
                 break
