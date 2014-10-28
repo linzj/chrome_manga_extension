@@ -20,11 +20,11 @@ function clickHandler(e) {
         queryStringElement.oldValue = nextPageQuery
     }
     chrome.runtime.getBackgroundPage(function (backgroundWindow) {
-        backgroundWindow.boot([],{"nextPageQuery":nextPageQuery});
+        var tabController  = new backgroundWindow.TabController()
+        tabController.boot({"nextPageQuery" : nextPageQuery})
         closeWindow()
     })
     shouldClose++
-    // boot([])
 }
 
 
