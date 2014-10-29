@@ -8,11 +8,12 @@ function TabController() {
     this.oldState = this.NOT_STARTED
     this.tabId = 0
     this.bootAttr = null
-    this.globalFilterTimeout = globalFilterTimeout
-    this.globalTimeout =globalTimeout
 }
 
 TabController.prototype = {
+    globalFilterTimeout : globalFilterTimeout,
+    globalFilterTimes : globalFilterTimes,
+    globalTimeout : globalTimeout,
     changeState : function (newState) {
         this.oldState = this.state
         this.state = newState
