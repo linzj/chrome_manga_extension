@@ -21,7 +21,7 @@ function clickHandler(e) {
     }
     chrome.runtime.getBackgroundPage(function (backgroundWindow) {
         var tabController  = new backgroundWindow.TabController()
-        tabController.boot({"nextPageQuery" : nextPageQuery})
+        tabController.boot({"nextPageQuery" : nextPageQuery, 'title' : null, imgArray : []})
         closeWindow()
     })
     shouldClose++

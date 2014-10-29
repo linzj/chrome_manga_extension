@@ -11,8 +11,9 @@ chrome.runtime.onMessage.addListener(function (message,sender,sendRespond) {
     html.appendChild(head)
     // create script node
     var script = document.createElement('script')
+    var urls = message.urls
     script.innerHTML = '\n' +
-    'var min = 0,max = ' + message.length + ' ,current = 0\n' +
+    'var min = 0,max = ' + urls.length + ' ,current = 0\n' +
     'function next(){ if(current < (max - 1)) {document.getElementById(""+current).style.display="none";document.getElementById(""+(current+1)).style.display="block";current+=1;}}\n'+
     'function previous() { if(current > min){document.getElementById(""+current).style.display="none";document.getElementById(""+(current-1)).style.display="block";current-=1;}}\n'
 
@@ -21,8 +22,8 @@ chrome.runtime.onMessage.addListener(function (message,sender,sendRespond) {
     var body = document.createElement('body')
     html.appendChild(body)
     // append img node 
-    for(var i = 0; i < message.length; ++i) {
-        var url = message[i]
+    for(var i = 0; i < urls.length; ++i) {
+        var url = urls[i]
         var img = document.createElement('img')
         img.src = url
         img.id = i
@@ -47,5 +48,6 @@ chrome.runtime.onMessage.addListener(function (message,sender,sendRespond) {
     script2.innerHTML = '\n' +
     'document.getElementById("prev").onclick = previous;document.getElementById("next").onclick = next;'
     body.appendChild(script2)
+    document.title = message.title
     chrome.runtime.onMessage.removeListener(arguments.callee)
 })

@@ -16,8 +16,14 @@ InstallObserver.prototype = {
                 var bluntCode = "\n" +
                 'var injectScript=function(d){var c=Math.random().toString().substr(2),a=document.createElement("script");a.id=c;a.type="text/javascript";a.innerHTML=d+";document.documentElement.removeChild(document.getElementById(\'"+c+"\'));";document.documentElement.appendChild(a);};\n' +
                 'var injectCode = \'var scripts = ' + JSON.stringify(this.bootAttr.overrideScripts) + ';for(var i = 0;i < scripts.length;++i){ window[scripts[i]] = function(){console.log(\"shit\")}};\'\n' + 
-                'injectScript(injectCode)'
-                chrome.tabs.executeScript(this.tabId, {"allFrames" : true, "code" : bluntCode}, function () {
+                'injectScript(injectCode);\n' +
+                'document.title;'
+                chrome.tabs.executeScript(this.tabId, {"allFrames" : true, "code" : bluntCode}, function (results) {
+                        if (typeof results == 'undefined')
+                            return
+
+                        var title = results[0]
+                        this.bootAttr.title = title
                         this.nextStep();
                 }.bind(this))
 
@@ -283,7 +289,7 @@ ModifyPage.prototype = {
                 for (var i = 0; i < this.bootAttr.imgArray.length; ++i) {
                     urls.push(this.bootAttr.imgArray[i][0])
                 }
-                chrome.tabs.sendMessage(this.tabId, urls, function() {
+                chrome.tabs.sendMessage(this.tabId, { 'urls' : urls, 'title' : this.bootAttr.title }, function() {
                     this.nextStep()
                 }.bind(this));
             }.bind(this))
