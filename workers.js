@@ -78,7 +78,9 @@ Filter.prototype = {
             break
         }
         console.log(logString)
-        chrome.tabs.executeScript(this.tabs, {"code" : "var __my_img_selector__ = " + this.bootAttr.imgQuery + ';', "runAt" : "document_end"}, function () {
+        var code = "var __my_img_selector__ = '" + this.bootAttr.imgQuery + "';"
+        console.log(code)
+        chrome.tabs.executeScript(this.tabs, {"code" : code, "runAt" : "document_end"}, function () {
             chrome.tabs.executeScript(this.tabId, {"file" : "filterInjectCode.js", "runAt" : "document_end"}, this.onScriptExecuted.bind(this) );
         }.bind(this));
     },
