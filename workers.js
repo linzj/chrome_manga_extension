@@ -64,7 +64,6 @@ function Filter(tabId, bootAttr, controller) {
     this.areaAverage = -1
     this.filterTimes = 0
     this.timerId = -1
-    this.candidatePic = null
     this.controller = controller 
     this.hasNextStep = false
 }
@@ -79,7 +78,9 @@ Filter.prototype = {
             break
         }
         console.log(logString)
-        chrome.tabs.executeScript(this.tabId, {"file":"filterInjectCode.js", "runAt":"document_end"}, this.onScriptExecuted.bind(this) )
+        chrome.tabs.executeScript(this.tabs, {"code" : "var __my_img_selector__ = " + this.bootAttr.imgQuery + ';', "runAt" : "document_end"}, function () {
+            chrome.tabs.executeScript(this.tabId, {"file" : "filterInjectCode.js", "runAt" : "document_end"}, this.onScriptExecuted.bind(this) );
+        }.bind(this));
     },
     updateAverageArea : function (area) {
         this.areaAverage = (this.areaAverage * this.bootAttr.imgArray.length + area) / (this.bootAttr.imgArray.length + 1)
@@ -109,27 +110,6 @@ Filter.prototype = {
             if(this.urlSet[url] == true)
                 continue
             this.urlSet[url] = true
-            // test if current pic is larger than the average picture area, or not smaller than 20 %
-            var width = result[i][1]
-            var height = result[i][2]
-            var area = width * height
-            if (this.areaAverage == -1) {
-                this.areaAverage = area
-            } else if (this.areaAverage * 0.80 > area) {
-                if (this.candidatePic === null) {
-                    this.candidatePic = result[i]
-                } else {
-                    // only update those bigger than original candidate
-                    var candidateArea = this.candidatePic[1] * this.candidatePic[2]
-                    if (candidateArea < area)
-                        this.candidatePic = result[i]
-                }
-                break
-            } else {
-                // update areaAverage
-                this.updateAverageArea(area)
-            }
-
             this.pushPic(result[i])
             hasFound = true
         }
@@ -142,13 +122,6 @@ Filter.prototype = {
            // we got nothing.
            this.timerId = setTimeout(this.filter.bind(this), this.controller.globalFilterTimeout)
            this.filterTimes++
-        } else if (this.candidatePic !== null) {
-            console.log('choosen candidatePic: ' + this.candidatePic)
-            var candidateArea = this.candidatePic[1] * this.candidatePic[2]
-            this.updateAverageArea(candidateArea)
-            this.pushPic(this.candidatePic)
-            this.candidatePic = null
-            shouldNextStep = true
         } else {
             shouldNextStep = true
         }
