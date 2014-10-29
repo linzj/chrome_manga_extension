@@ -33,24 +33,6 @@ InstallObserver.prototype = {
     }
 }
 
-function Bucket(val) {
-    this.val = val
-    this.size = 1
-}
-
-Bucket.prototype.accept = function (val) {
-    if (Math.abs(this.val - val) < this.val * 0.3) {
-        this.val = (this.val * this.size + val) / (this.size + 1)
-        this.size++
-        return true
-    }
-    return false
-}
-
-function bucketSort(a, b) {
-    return b.size - a.size
-}
-
 // Debug only. And only V8
 // function MyError() {
 //   Error.captureStackTrace(this, MyError);
@@ -60,7 +42,6 @@ function bucketSort(a, b) {
 function Filter(tabId, bootAttr, controller) {
     this.tabId = tabId
     this.bootAttr = bootAttr 
-    this.urlSet = {}
     this.areaAverage = -1
     this.filterTimes = 0
     this.timerId = -1
@@ -72,20 +53,11 @@ Filter.prototype = {
     filter: function () {
         var logString = 'Filter.filter, this.timerId = ' + this.timerId
         // check for empty map
-        var emptySet = true
-        for (var key in this.urlSet) {
-            emptySet = false
-            break
-        }
         console.log(logString)
         var code = "var __my_img_selector__ = '" + this.bootAttr.imgQuery + "';"
-        console.log(code)
         chrome.tabs.executeScript(this.tabs, {"code" : code, "runAt" : "document_end"}, function () {
-            chrome.tabs.executeScript(this.tabId, {"file" : "filterInjectCode.js", "runAt" : "document_end"}, this.onScriptExecuted.bind(this) );
+            chrome.tabs.executeScript(this.tabId, {"file" : "filterInjectCode.js", "runAt" : "document_end"}, this.onScriptExecuted.bind(this));
         }.bind(this));
-    },
-    updateAverageArea : function (area) {
-        this.areaAverage = (this.areaAverage * this.bootAttr.imgArray.length + area) / (this.bootAttr.imgArray.length + 1)
     },
     pushPic : function (img) {
         this.bootAttr.imgArray.push(img)
@@ -93,11 +65,11 @@ Filter.prototype = {
 
         // verifing the urlSet
         var keyCount = 0
-        for (var k in this.urlSet) {
+        for (var k in this.bootAttr.urlSet) {
             keyCount++
         }
         if (keyCount < this.bootAttr.imgArray.length) {
-            console.error("Filter.onScriptExecuted: keyCount of this.urlSet is not equals to this.bootAttr.imgArray.length")
+            console.error("Filter.onScriptExecuted: keyCount of this.urlSet is not equals to imgArray.length")
         }
     },
     onScriptExecuted : function(results) {
@@ -108,10 +80,11 @@ Filter.prototype = {
         var result = results[0]
         var hasFound = false
         for(var i = 0; i < result.length; ++i) {
-            var url = result[i][0]
-            if(this.urlSet[url] == true)
+            var url = result[i]
+            console.log('onScriptExecuted:: url = ' + url)
+            if(this.bootAttr.urlSet[url] === true)
                 continue
-            this.urlSet[url] = true
+            this.bootAttr.urlSet[url] = true
             this.pushPic(result[i])
             hasFound = true
         }
@@ -232,7 +205,7 @@ ModifyPage.prototype = {
         chrome.tabs.executeScript(this.tabId,{"allFrames":true,"file":"modifyInjectCode.js"},function(){
                 var urls = []
                 for (var i = 0; i < this.bootAttr.imgArray.length; ++i) {
-                    urls.push(this.bootAttr.imgArray[i][0])
+                    urls.push(this.bootAttr.imgArray[i])
                 }
                 chrome.tabs.sendMessage(this.tabId, urls, function() {
                     this.nextStep()

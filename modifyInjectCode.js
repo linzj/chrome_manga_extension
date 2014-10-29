@@ -1,6 +1,7 @@
 
 chrome.runtime.onMessage.addListener(function (message,sender,sendRespond) {
     var html = document.documentElement;
+    var title = document.title;
     // clear the child
     var childNodesSize = html.childNodes.length;
     for(var i = 0; i < childNodesSize; ++i) {
@@ -47,5 +48,6 @@ chrome.runtime.onMessage.addListener(function (message,sender,sendRespond) {
     script2.innerHTML = '\n' +
     'document.getElementById("prev").onclick = previous;document.getElementById("next").onclick = next;'
     body.appendChild(script2)
+    document.title = title
     chrome.runtime.onMessage.removeListener(arguments.callee)
 })
