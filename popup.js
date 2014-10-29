@@ -9,19 +9,23 @@ function closeWindow(){
 function clickHandler(e) {
 
     var queryStringElement = document.querySelector('#queryString');
+    var imgStringElement = document.querySelector('#imgString');
     var nextPageQuery = queryStringElement.value;
-    if(!nextPageQuery) {
+    var imgQuery = imgStringElement.value;
+    if(!nextPageQuery || !imgQuery) {
         alert('must have a inempty query string')
     }
-    if(queryStringElement.oldValue != nextPageQuery) {
-        chrome.storage.local.set({'QueryString':nextPageQuery},function(){closeWindow()})
+    if(queryStringElement.oldValue !== nextPageQuery || imgStringElement.oldValue !== imgQuery) {
+        chrome.storage.local.set({'QueryString' : nextPageQuery, 'ImgString' : imgQuery },function(){closeWindow()})
         shouldClose++
         // update the old Value
         queryStringElement.oldValue = nextPageQuery
+        imgStringElement.oldValue = imgQuery
     }
+
     chrome.runtime.getBackgroundPage(function (backgroundWindow) {
         var tabController  = new backgroundWindow.TabController()
-        tabController.boot({"nextPageQuery" : nextPageQuery})
+        tabController.boot({"nextPageQuery" : nextPageQuery, 'imgQuery' : imgQuery, imgArray : []})
         closeWindow()
     })
     shouldClose++
@@ -34,13 +38,19 @@ function clickHandler(e) {
 document.addEventListener('DOMContentLoaded', function () {
     document.querySelector('#myshit').addEventListener('click', clickHandler);
     var queryStringElement = document.querySelector('#queryString')
+    var imgStringElement = document.querySelector('#imgString');
     queryStringElement.value = 'img#curPic'
     queryStringElement.oldValue = 'img#curPic'
+    imgStringElement.value = 'img#curPic'
+    imgStringElement.oldValue = 'img#curPic'
     chrome.storage.local.get("QueryString",function(items) {
-        if("QueryString" in items) {
-            var queryStringElement = document.querySelector('#queryString');
+        if ("QueryString" in items) {
             queryStringElement.value = items.QueryString
             queryStringElement.oldValue = items.QueryString
+        }
+        if ("ImgString" in items) {
+            imgStringElement.value = items.ImgString
+            imgStringElement.oldValue = items.ImgString
         }
     });
 });

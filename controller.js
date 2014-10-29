@@ -19,11 +19,8 @@ TabController.prototype = {
     },
     boot : function (bootAttr) {
         console.log('boot called')
-        if (!("imgArray" in bootAttr)) {
-            bootAttr.imgArray = []
-        }
         if (!("overrideScripts" in bootAttr)) {
-            bootAttr.overrideScripts = globalScripts
+            bootAttr['overrideScripts'] = globalScripts
         }
         chrome.tabs.query({"active":true},function (tabs){
                 var tab = tabs[0]

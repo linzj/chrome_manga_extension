@@ -78,30 +78,6 @@ Filter.prototype = {
             emptySet = false
             break
         }
-        if (emptySet && this.bootAttr.imgArray.length > 0) {
-
-            var buckets = []
-            for (var imgIndex in this.bootAttr.imgArray) {
-                var accepted = false
-                var img = this.bootAttr.imgArray[imgIndex]
-                var area = img[1] * img[2]
-                this.urlSet[img[0]] = true
-                for (var bucketIndex in buckets) {
-                    var bucket = buckets[bucketIndex]
-                    if (bucket.accept(area)) {
-                        accepted = true
-                        break
-                    }
-                }
-                if (!accepted) {
-                    buckets.push(new Bucket(area))
-                }
-            }
-            buckets.sort(bucketSort)
-
-            this.areaAverage = buckets[0].val
-            logString += "; this.areaAverage = " + this.areaAverage
-        }
         console.log(logString)
         chrome.tabs.executeScript(this.tabId, {"file":"filterInjectCode.js", "runAt":"document_end"}, this.onScriptExecuted.bind(this) )
     },
