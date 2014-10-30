@@ -93,3 +93,13 @@ TabController.prototype = {
     NEXT_PAGE : 3,
     MODIFY_PAGE: 4
 }
+
+function ChapterController () {
+    this.bootAttr = null
+}
+
+ChapterController.prototype = {
+    boot : function (bootAttr) {
+        this.bootAttr = bootAttr
+    }
+}

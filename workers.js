@@ -303,3 +303,23 @@ ModifyPage.prototype = {
     }
 }
 
+
+function SelectElement(tabId, controller) {
+    this.controller = controller
+    this.tabId = tabId
+}
+
+SelectElement.prototype = {
+    select : function (selectionMap) {
+        chrome.tab.executeScript(this.tabId, { "allFrames" : false, "file" : "selectorInjectCode.js", "runAt":"document_end" }, function () {
+            chrome.tab.sendMessage(this.tabId, selectionMap, function (result) {
+                if (typeof result == 'undefined') {
+                    this.controller.selectElementError(chrome.runtime.lastError);
+                    return;
+                }
+                this.controller.selectElementOkay(result);
+
+            }.bind(this));
+        }.bind(this));
+    }
+}
