@@ -50,4 +50,5 @@ chrome.runtime.onMessage.addListener(function (message,sender,sendRespond) {
     body.appendChild(script2)
     document.title = message.title
     chrome.runtime.onMessage.removeListener(arguments.callee)
+    sendRespond('okay')
 })

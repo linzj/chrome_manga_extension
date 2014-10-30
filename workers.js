@@ -23,7 +23,8 @@ InstallObserver.prototype = {
                             return
 
                         var title = results[0]
-                        this.bootAttr.title = title
+                        if (this.bootAttr.title === null)
+                            this.bootAttr.title = title
                         this.nextStep();
                 }.bind(this))
 
@@ -289,7 +290,7 @@ ModifyPage.prototype = {
                 for (var i = 0; i < this.bootAttr.imgArray.length; ++i) {
                     urls.push(this.bootAttr.imgArray[i][0])
                 }
-                chrome.tabs.sendMessage(this.tabId, { 'urls' : urls, 'title' : this.bootAttr.title }, function() {
+                chrome.tabs.sendMessage(this.tabId, { 'urls' : urls, 'title' : this.bootAttr.title }, function (respond) {
                     this.nextStep()
                 }.bind(this));
             }.bind(this))
@@ -303,7 +304,6 @@ ModifyPage.prototype = {
     }
 }
 
-
 function SelectElement(tabId, controller) {
     this.controller = controller
     this.tabId = tabId
@@ -311,8 +311,8 @@ function SelectElement(tabId, controller) {
 
 SelectElement.prototype = {
     select : function (selectionMap) {
-        chrome.tab.executeScript(this.tabId, { "allFrames" : false, "file" : "selectorInjectCode.js", "runAt":"document_end" }, function () {
-            chrome.tab.sendMessage(this.tabId, selectionMap, function (result) {
+        chrome.tabs.executeScript(this.tabId, { "allFrames" : false, "file" : "selectorInjectCode.js", "runAt":"document_end" }, function () {
+            chrome.tabs.sendMessage(this.tabId, selectionMap, function (result) {
                 if (typeof result == 'undefined') {
                     this.controller.selectElementError(chrome.runtime.lastError);
                     return;

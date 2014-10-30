@@ -22,8 +22,13 @@ function clickHandler(e) {
         queryStringElement.oldValue = nextPageQuery
     }
     chrome.runtime.getBackgroundPage(function (backgroundWindow) {
-        var tabController  = new backgroundWindow.TabController()
-        tabController.boot({"nextPageQuery" : nextPageQuery, 'title' : null, imgArray : []})
+        if (chapterString === "") {
+            var tabController  = new backgroundWindow.TabController(null)
+            tabController.boot({"nextPageQuery" : nextPageQuery, 'title' : null, imgArray : []})
+        } else {
+            var chapterController = new backgroundWindow.ChapterController()
+            chapterController.boot({ "nextPageQuery" : nextPageQuery, "chapterString" : chapterString })
+        }
         closeWindow()
     })
     shouldClose++
