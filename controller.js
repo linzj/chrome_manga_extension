@@ -65,7 +65,7 @@ TabController.prototype = {
                 break
             case this.MODIFY_PAGE:
                 if (this.parentController != null)
-                    this.parentController.tabFinished()
+                    this.parentController.tabFinished(this.tabId)
                 break
         }
     },
@@ -138,10 +138,20 @@ ChapterController.prototype = {
             tabController.boot_({"nextPageQuery" : this.bootAttr.nextPageQuery, 'title' : null, imgArray : []}, tab.id)
         }.bind(this))
     },
-    tabFinished : function () {
+    tabFinished : function (tabId) {
+        this.capturePage(tabId)
         if (this.targetsQueue.length != 0) {
             var url = this.targetsQueue.shift()
             this.startTabs_(url)
         }
+    },
+    capturePage : function (tabId) {
+        chrome.pageCapture.saveAsMHTML(tabId, function (blob) {
+            this.sendPage(blob, tabId)
+        }.bind(this))
+    },
+    sendPage : function (blob, tabId) {
+        var xmlhttp=new XMLHttpRequest();
+
     }
 }
