@@ -21,16 +21,6 @@ chrome.runtime.onMessage.addListener(function (message,sender,sendRespond) {
     // create body node
     var body = document.createElement('body')
     html.appendChild(body)
-    // append img node 
-    for(var i = 0; i < urls.length; ++i) {
-        var url = urls[i]
-        var img = document.createElement('img')
-        img.src = url
-        img.id = i
-        img.style.display = 'none'
-        body.appendChild(img)
-    }
-    document.getElementById('0').style.display = 'block'
     var previous = document.createElement('button')
     previous.innerHTML = 'previous'
     previous.id = 'prev'
@@ -43,6 +33,16 @@ chrome.runtime.onMessage.addListener(function (message,sender,sendRespond) {
     next.id = 'next'
     next.style.float = 'right'
     body.appendChild(next) 
+    // append img node 
+    for(var i = 0; i < urls.length; ++i) {
+        var url = urls[i]
+        var img = document.createElement('img')
+        img.src = url
+        img.id = i
+        img.style.display = 'none'
+        body.appendChild(img)
+    }
+    document.getElementById('0').style.display = 'block'
     // add another script tag to change next & previous 
     var script2 = document.createElement('script')
     script2.innerHTML = '\n' +
