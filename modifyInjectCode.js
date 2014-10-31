@@ -45,7 +45,6 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendRespond) {
         imgCount++
         img.addEventListener('load', function () {
             imgCount--;
-            console.log('imgCount--;')
             if (imgCount == 0) {
                 window.__modify__okay__ = true
             }

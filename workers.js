@@ -292,14 +292,17 @@ ModifyPage.prototype = {
                 }
                 chrome.tabs.sendMessage(this.tabId, { 'urls' : urls, 'title' : this.bootAttr.title }, function (respond) {
                     // start a time to query if the modified page has done its job (all image loaded.).
+                    console.log('ModifyPage.modify: start timer to test if modified page is ready. title: ' + this.bootAttr.title)
                     setTimeout(function () {
                         // save this anonymous function to retry later.
                          var thisFunction = arguments.callee;
                          chrome.tabs.sendMessage(this.tabId, {}, function (respond) {
                              if (respond) {
+                                 console.log('ModifyPage.modify.respond. title: ' + this.bootAttr.title)
                                  this.nextStep()
                              } else {
                                  // retry
+                                 console.log('ModifyPage.modify.retry timer. title: ' + this.bootAttr.title)
                                  setTimeout(thisFunction, 250);
                              }
                          }.bind(this));
