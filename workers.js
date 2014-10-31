@@ -291,7 +291,19 @@ ModifyPage.prototype = {
                     urls.push(this.bootAttr.imgArray[i][0])
                 }
                 chrome.tabs.sendMessage(this.tabId, { 'urls' : urls, 'title' : this.bootAttr.title }, function (respond) {
-                    this.nextStep()
+                    // start a time to query if the modified page has done its job (all image loaded.).
+                    setTimeout(function () {
+                        // save this anonymous function to retry later.
+                         var thisFunction = arguments.callee;
+                         chrome.tabs.sendMessage(this.tabId, {}, function (respond) {
+                             if (respond) {
+                                 this.nextStep()
+                             } else {
+                                 // retry
+                                 setTimeout(thisFunction, 250);
+                             }
+                         }.bind(this));
+                    }.bind(this), 250)
                 }.bind(this));
             }.bind(this))
     },

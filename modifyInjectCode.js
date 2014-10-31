@@ -1,5 +1,4 @@
-
-chrome.runtime.onMessage.addListener(function (message,sender,sendRespond) {
+chrome.runtime.onMessage.addListener(function (message, sender, sendRespond) {
     var html = document.documentElement;
     // clear the child
     var childNodesSize = html.childNodes.length;
@@ -29,10 +28,12 @@ chrome.runtime.onMessage.addListener(function (message,sender,sendRespond) {
 
 
     var next = document.createElement('button')
+    var imgCount = 0
     next.innerHTML = 'next'
     next.id = 'next'
     next.style.float = 'right'
     body.appendChild(next) 
+    window.__modify__okay__ = false
     // append img node 
     for(var i = 0; i < urls.length; ++i) {
         var url = urls[i]
@@ -41,6 +42,14 @@ chrome.runtime.onMessage.addListener(function (message,sender,sendRespond) {
         img.id = i
         img.style.display = 'none'
         body.appendChild(img)
+        imgCount++
+        img.addEventListener('load', function () {
+            imgCount--;
+            console.log('imgCount--;')
+            if (imgCount == 0) {
+                window.__modify__okay__ = true
+            }
+        })
     }
     document.getElementById('0').style.display = 'block'
     // add another script tag to change next & previous 
@@ -51,4 +60,7 @@ chrome.runtime.onMessage.addListener(function (message,sender,sendRespond) {
     document.title = message.title
     chrome.runtime.onMessage.removeListener(arguments.callee)
     sendRespond('okay')
+    chrome.runtime.onMessage.addListener(function (message, sender, sendRespond2) {
+        sendRespond2(window.__modify__okay__)
+    })
 })
