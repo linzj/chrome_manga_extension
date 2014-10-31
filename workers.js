@@ -23,7 +23,8 @@ InstallObserver.prototype = {
                             return
 
                         var title = results[0]
-                        this.bootAttr.title = title
+                        if (this.bootAttr.title === null)
+                            this.bootAttr.title = title
                         this.nextStep();
                 }.bind(this))
 
@@ -289,8 +290,22 @@ ModifyPage.prototype = {
                 for (var i = 0; i < this.bootAttr.imgArray.length; ++i) {
                     urls.push(this.bootAttr.imgArray[i][0])
                 }
-                chrome.tabs.sendMessage(this.tabId, { 'urls' : urls, 'title' : this.bootAttr.title }, function() {
-                    this.nextStep()
+                chrome.tabs.sendMessage(this.tabId, { 'urls' : urls, 'title' : this.bootAttr.title }, function (respond) {
+                    // start a time to query if the modified page has done its job (all image loaded.).
+                    // console.log('ModifyPage.modify: start timer to test if modified page is ready. title: ' + this.bootAttr.title)
+                    var thisFunction = function () {
+                         chrome.tabs.sendMessage(this.tabId, {}, function (respond) {
+                             if (respond) {
+                                 // console.log('ModifyPage.modify.respond. title: ' + this.bootAttr.title)
+                                 this.nextStep()
+                             } else {
+                                 // retry
+                                 // console.log('ModifyPage.modify.retry timer. title: ' + this.bootAttr.title)
+                                 setTimeout(thisFunction, 250);
+                             }
+                         }.bind(this));
+                    }.bind(this)
+                    setTimeout(thisFunction, 250)
                 }.bind(this));
             }.bind(this))
     },
@@ -303,3 +318,22 @@ ModifyPage.prototype = {
     }
 }
 
+function SelectElement(tabId, controller) {
+    this.controller = controller
+    this.tabId = tabId
+}
+
+SelectElement.prototype = {
+    select : function (selectionMap) {
+        chrome.tabs.executeScript(this.tabId, { "allFrames" : false, "file" : "selectorInjectCode.js", "runAt":"document_end" }, function () {
+            chrome.tabs.sendMessage(this.tabId, selectionMap, function (result) {
+                if (typeof result == 'undefined') {
+                    this.controller.selectElementError(chrome.runtime.lastError);
+                    return;
+                }
+                this.controller.selectElementOkay(result);
+
+            }.bind(this));
+        }.bind(this));
+    }
+}

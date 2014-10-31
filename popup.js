@@ -8,20 +8,27 @@ function closeWindow(){
 
 function clickHandler(e) {
 
+    var chapterStringElement = document.querySelector('#chapterString')
     var queryStringElement = document.querySelector('#queryString');
     var nextPageQuery = queryStringElement.value;
+    var chapterString = chapterStringElement.value;
     if(!nextPageQuery) {
         alert('must have a inempty query string')
     }
-    if(queryStringElement.oldValue != nextPageQuery) {
-        chrome.storage.local.set({'QueryString':nextPageQuery},function(){closeWindow()})
+    if(queryStringElement.oldValue !== nextPageQuery || chapterStringElement.oldValue !== chapterString) {
+        chrome.storage.local.set({'QueryString' : nextPageQuery, 'ChapterString' : chapterString},function(){closeWindow()})
         shouldClose++
         // update the old Value
         queryStringElement.oldValue = nextPageQuery
     }
     chrome.runtime.getBackgroundPage(function (backgroundWindow) {
-        var tabController  = new backgroundWindow.TabController()
-        tabController.boot({"nextPageQuery" : nextPageQuery, 'title' : null, imgArray : []})
+        if (chapterString === "") {
+            var tabController  = new backgroundWindow.TabController(null)
+            tabController.boot({"nextPageQuery" : nextPageQuery, 'title' : null, imgArray : []})
+        } else {
+            var chapterController = new backgroundWindow.ChapterController()
+            chapterController.boot({ "nextPageQuery" : nextPageQuery, "chapterString" : chapterString })
+        }
         closeWindow()
     })
     shouldClose++
@@ -34,13 +41,20 @@ function clickHandler(e) {
 document.addEventListener('DOMContentLoaded', function () {
     document.querySelector('#myshit').addEventListener('click', clickHandler);
     var queryStringElement = document.querySelector('#queryString')
+    var chapterStringElement = document.querySelector('#chapterString')
     queryStringElement.value = 'img#curPic'
     queryStringElement.oldValue = 'img#curPic'
-    chrome.storage.local.get("QueryString",function(items) {
-        if("QueryString" in items) {
-            var queryStringElement = document.querySelector('#queryString');
+    chapterString.value = ''
+    chapterString.oldValue = ''
+
+    chrome.storage.local.get(["QueryString", "ChapterString"], function(items) {
+        if ("QueryString" in items) {
             queryStringElement.value = items.QueryString
             queryStringElement.oldValue = items.QueryString
+        }
+        if ("ChapterString" in items) {
+            chapterString.value = items.ChapterString
+            chapterString.oldValue = items.ChapterString
         }
     });
 });

@@ -3,11 +3,12 @@ var globalScripts = ["alert","confirm"]
 var globalFilterTimes = 10
 var globalFilterTimeout = 500
 
-function TabController() {
+function TabController(controller) {
     this.state = this.NOT_STARTED
     this.oldState = this.NOT_STARTED
     this.tabId = 0
     this.bootAttr = null
+    this.parentController = controller
 }
 
 TabController.prototype = {
@@ -20,18 +21,21 @@ TabController.prototype = {
     },
     boot : function (bootAttr) {
         console.log('boot called')
+        chrome.tabs.query({"active" : true},function (tabs) {
+                var tab = tabs[0]
+                this.boot_(bootAttr, tab.id)
+        }.bind(this));
+    },
+    boot_ : function(bootAttr, tabId) {
         if (!("overrideScripts" in bootAttr)) {
             bootAttr['overrideScripts'] = globalScripts
         }
-        chrome.tabs.query({"active":true},function (tabs){
-                var tab = tabs[0]
-                console.assert(this.state === this.NOT_STARTED)
-                this.changeState(this.INSTALL_OBSERVER)
-                this.tabId = tab.id
-                this.bootAttr = bootAttr
-                var myInstallObserver = new InstallObserver(bootAttr, this, tab.id) 
-                myInstallObserver.installObserver()
-                }.bind(this));
+        this.tabId = tabId
+        console.assert(this.state === this.NOT_STARTED)
+        this.changeState(this.INSTALL_OBSERVER)
+        this.bootAttr = bootAttr
+        var myInstallObserver = new InstallObserver(bootAttr, this, this.tabId) 
+        myInstallObserver.installObserver()
     },
     restart : function () {
         console.log('restart called ')
@@ -60,7 +64,8 @@ TabController.prototype = {
                 }.bind(this));
                 break
             case this.MODIFY_PAGE:
-                // TODO: modify other upper controller to finish.
+                if (this.parentController != null)
+                    this.parentController.tabFinished(this.tabId, this.bootAttr.title)
                 break
         }
     },
@@ -92,4 +97,76 @@ TabController.prototype = {
     FILTER : 2,
     NEXT_PAGE : 3,
     MODIFY_PAGE: 4
+}
+
+function ChapterController () {
+    this.bootAttr = null
+    this.targetsQueue = null
+    this.startedTab = false
+}
+
+ChapterController.prototype = {
+    MAX_RUNNING_TABS : 4,
+    boot : function (bootAttr) {
+        this.bootAttr = bootAttr
+        chrome.tabs.query({ "active" : true },function (tabs) {
+            var tab = tabs[0]
+
+            var selectElement = new SelectElement(tab.id, this)
+            selectElement.select({ 'selector' : this.bootAttr.chapterString, 'target' : 'href'})
+        }.bind(this));
+    },
+    selectElementError : function (errorString) {
+        console.error("ChapterController selectElementError: " + errorString)
+    },
+    selectElementOkay : function (results) {
+        this.targetsQueue = results
+        if (!this.startedTab) {
+            this.startedTab = true
+            this.startTabs()
+        }
+    },
+    startTabs : function () {
+        for (var i = 0; i < this.MAX_RUNNING_TABS && this.targetsQueue.length != 0; ++i) {
+            var url = this.targetsQueue.shift()
+            this.startTabs_(url)
+        }
+    },
+    startTabs_ : function (url) {
+        if (url == null)
+            return
+        console.log('ChapterController:starting for ' + url)
+        chrome.tabs.create({ 'url' : url, 'active' : false }, function (tab) {
+            var tabController  = new TabController(this)
+            tabController.boot_({"nextPageQuery" : this.bootAttr.nextPageQuery, 'title' : null, imgArray : []}, tab.id)
+        }.bind(this))
+    },
+    tabFinished : function (tabId, title) {
+        this.capturePage(tabId, title)
+        if (this.targetsQueue.length != 0) {
+            var url = this.targetsQueue.shift()
+            this.startTabs_(url)
+        }
+    },
+    capturePage : function (tabId, title) {
+        chrome.pageCapture.saveAsMHTML({ 'tabId' : tabId }, function (blob) {
+            this.sendPage(blob, tabId, title)
+        }.bind(this))
+    },
+    sendPage : function (blob, tabId, title) {
+        var xmlhttp = new XMLHttpRequest();
+        var object = this
+        var formData = new FormData()
+        formData.append('title', title)
+        formData.append('mhtml', blob)
+        xmlhttp.onreadystatechange = function () {
+            if (xmlhttp.readyState == 4) {
+                chrome.tabs.remove(tabId)
+                console.log('ChapterController.sendPage.onreadystatechange: DONE. With Respond : ' + xmlhttp.responseText)
+            }
+            console.log('ChapterController.sendPage.onreadystatechange:tabId: ' + tabId + '; xmlhttp.readyState: ' + xmlhttp.readyState)
+        };
+        xmlhttp.open('POST', 'http://localhost:8787', true)
+        xmlhttp.send(formData)
+    }
 }
