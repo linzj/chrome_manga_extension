@@ -65,7 +65,7 @@ TabController.prototype = {
                 break
             case this.MODIFY_PAGE:
                 if (this.parentController != null)
-                    this.parentController.tabFinished(this.tabId)
+                    this.parentController.tabFinished(this.tabId, this.bootAttr.title)
                 break
         }
     },
@@ -133,25 +133,38 @@ ChapterController.prototype = {
         }
     },
     startTabs_ : function (url) {
+        console.log('ChapterController:starting for ' + url)
         chrome.tabs.create({ 'url' : url, 'active' : false }, function (tab) {
             var tabController  = new TabController(this)
             tabController.boot_({"nextPageQuery" : this.bootAttr.nextPageQuery, 'title' : null, imgArray : []}, tab.id)
         }.bind(this))
     },
-    tabFinished : function (tabId) {
-        this.capturePage(tabId)
+    tabFinished : function (tabId, title) {
+        this.capturePage(tabId, title)
         if (this.targetsQueue.length != 0) {
             var url = this.targetsQueue.shift()
             this.startTabs_(url)
         }
     },
-    capturePage : function (tabId) {
-        chrome.pageCapture.saveAsMHTML(tabId, function (blob) {
-            this.sendPage(blob, tabId)
+    capturePage : function (tabId, title) {
+        chrome.pageCapture.saveAsMHTML({ 'tabId' : tabId }, function (blob) {
+            this.sendPage(blob, tabId, title)
         }.bind(this))
     },
-    sendPage : function (blob, tabId) {
-        var xmlhttp=new XMLHttpRequest();
-
+    sendPage : function (blob, tabId, title) {
+        var xmlhttp = new XMLHttpRequest();
+        var object = this
+        var formData = new FormData()
+        formData.append('title', title)
+        formData.append('mhtml', blob)
+        xmlhttp.onreadystatechange = function () {
+            if (xmlhttp.readyState == 4) {
+                chrome.tabs.remove(tabId)
+                console.log('ChapterController.sendPage.onreadystatechange: DONE. With Respond : ' + xmlhttp.responseText)
+            }
+            console.log('ChapterController.sendPage.onreadystatechange:tabId: ' + tabId + '; xmlhttp.readyState: ' + xmlhttp.readyState)
+        };
+        xmlhttp.open('POST', 'http://localhost:8787', true)
+        xmlhttp.send(formData)
     }
 }
