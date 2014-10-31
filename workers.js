@@ -216,19 +216,19 @@ NextPage.prototype = {
         console.log('NextPage.nextPage: ', this.uniqueId)
         var object = this
         // observe the change of url
-        object.listener = function (tabId,changeInfo,tab) {
-            if(tabId == object.tabId && changeInfo.hasOwnProperty("status") ){
-                if(changeInfo.status == "complete"){
-                    object.stopTimer()
-                    object.markShouldNotStartTimer()
-                    object.nextStep()
-                    chrome.tabs.onUpdated.removeListener(arguments.callee)
+        object.listener = function (tabId, changeInfo, tab) {
+            if(tabId == this.tabId && changeInfo.hasOwnProperty("status") ){
+                if(changeInfo.status === "complete"){
+                    this.stopTimer()
+                    this.markShouldNotStartTimer()
+                    this.nextStep()
+                    chrome.tabs.onUpdated.removeListener(this.listener)
                 } else if(changeInfo.status == "loading") {
-                    object.markShouldNotStartTimer()
-                    object.stopTimer()
+                    this.markShouldNotStartTimer()
+                    this.stopTimer()
                 }
             }
-        }
+        }.bind(this)
         chrome.tabs.onUpdated.addListener(object.listener);
         chrome.tabs.executeScript(this.tabId,{ "file":"nextPageInjectCode.js"},function() {
             chrome.tabs.executeScript(object.tabId,{"code":"___mynextPage(\"" + object.bootAttr.nextPageQuery + "\");","runAt":"document_end"},function(){

@@ -137,8 +137,20 @@ ChapterController.prototype = {
             return
         console.log('ChapterController:starting for ' + url)
         chrome.tabs.create({ 'url' : url, 'active' : false }, function (tab) {
-            var tabController  = new TabController(this)
-            tabController.boot_({"nextPageQuery" : this.bootAttr.nextPageQuery, 'title' : null, imgArray : []}, tab.id)
+                var lastTimerId = 0;
+                var bindedCallback = function (id, changeInfo, tab2) {
+                    if (tab.id == id && changeInfo.status === "complete") {
+                        if (lastTimerId)
+                            clearTimeout(lastTimerId)
+                        // wait more 1s till all image loaded
+                        lastTimerId = setTimeout(function () {
+                            chrome.tabs.onUpdated.removeListener(bindedCallback);
+                            var tabController  = new TabController(this);
+                            tabController.boot_({"nextPageQuery" : this.bootAttr.nextPageQuery, 'title' : null, imgArray : []}, tab.id);
+                        }.bind(this), 1000)
+                    }
+                }.bind(this);
+                chrome.tabs.onUpdated.addListener(bindedCallback);
         }.bind(this))
     },
     tabFinished : function (tabId, title) {
