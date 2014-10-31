@@ -133,6 +133,8 @@ ChapterController.prototype = {
         }
     },
     startTabs_ : function (url) {
+        if (url == null)
+            return
         console.log('ChapterController:starting for ' + url)
         chrome.tabs.create({ 'url' : url, 'active' : false }, function (tab) {
             var tabController  = new TabController(this)

@@ -4,9 +4,56 @@
 from BaseHTTPServer import HTTPServer, BaseHTTPRequestHandler
 from SocketServer import ThreadingMixIn
 import threading
-import cgi
+import cgi, StringIO, base64, os, sys
 
-count = 1
+def parseNext(content, boundary):
+    end = content.find(boundary)
+    return content[0 : end], content[end + len(boundary) : ].lstrip()
+
+def parseContent(content):
+    fp = StringIO.StringIO(content)
+    save = False
+    path = None
+
+    while True:
+        line = fp.readline()
+        if not line:
+            break
+        line = line.strip()
+        if not line:
+            break
+        splitPoint = line.find(':')
+        if splitPoint == -1:
+            raise Exception('parseContent: splitPoint == -1: line: ' + line)
+        key = line[ 0 : splitPoint]
+        value = line[ splitPoint + 1 :]
+        if key == 'Content-Transfer-Encoding':
+            value = value.lstrip()
+            if value == 'base64':
+                save = True
+        if key == 'Content-Location':
+            path = value.lstrip()
+    data = fp.read()
+    if save:
+        return data, path
+    return None, None
+
+def save(path, base64Data, title):
+    lastSlash = path.rfind('/')
+    if lastSlash != -1:
+        path = path[lastSlash + 1:]
+    if os.path.exists(title) :
+        if not os.path.isdir(title):
+            print >>sys.stderr, "file exists and stop the saving: " + title
+            return False
+    else:
+        os.mkdir(title)
+
+    filePath = title + os.sep + path
+    with open(filePath, 'w') as f:
+        f.write(base64.b64decode(base64Data))
+
+
 class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self):
@@ -20,21 +67,34 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write('\n')
         return
     def saveInput(self, pdict):
-        global count
         print 'saving input'
         form = cgi.parse_multipart(self.rfile, pdict)
-        name = '' + str(count)
-        print 'printing keys'
-        for key in form.keys():
-            print key
-        print 'printing keys ends'
         if 'title' in form and form['title']:
-            name = form['title'] 
-            name = ''.join(name).decode('utf-8')
-            print name
-        with open(name + '.mhtml', 'w') as f:
-            f.write(''.join(form['mhtml']))
-        count += 1
+            title = form['title']
+            title = ''.join(title)
+            print title
+        mhtml = ''.join(form['mhtml'])
+
+        boundaryKeyword = 'boundary='
+        boundaryStart = mhtml.find(boundaryKeyword) + len(boundaryKeyword) + 1
+        boundaryEnd = mhtml.find('"', boundaryStart)
+        boundary = mhtml[boundaryStart : boundaryEnd]
+
+        realStart = mhtml.find(boundary, boundaryEnd) + len(boundary)
+        mhtml = mhtml[realStart:].lstrip()
+        with open('/tmp/log2.txt', 'w') as f:
+            f.write(mhtml)
+            f.flush()
+        if not boundary:
+            raise Exception('boundary should not be empty')
+        while True:
+            content, mhtml = parseNext(mhtml, boundary)
+            base64Data, path = parseContent(content)
+            if path and base64:
+                save(path, base64Data, title)
+            if not mhtml or mhtml.rstrip() == '--':
+                break
+
 
 class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
     """Handle requests in a separate thread."""
