@@ -161,7 +161,7 @@ ChapterController.prototype = {
         formData.append('mhtml', blob)
         xmlhttp.onreadystatechange = function () {
             if (xmlhttp.readyState == 4) {
-                // chrome.tabs.remove(tabId)
+                chrome.tabs.remove(tabId)
                 console.log('ChapterController.sendPage.onreadystatechange: DONE. With Respond : ' + xmlhttp.responseText)
             }
             console.log('ChapterController.sendPage.onreadystatechange:tabId: ' + tabId + '; xmlhttp.readyState: ' + xmlhttp.readyState)
