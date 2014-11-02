@@ -58,7 +58,7 @@ def save(path, base64Data, title):
         os.mkdir(title)
 
     filePath = title + os.sep + path
-    with open(filePath, 'w') as f:
+    with open(filePath, 'wb') as f:
         f.write(base64.b64decode(base64Data))
 
 
