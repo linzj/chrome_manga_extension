@@ -82,9 +82,6 @@ class Handler(BaseHTTPRequestHandler):
 
         realStart = mhtml.find(boundary, boundaryEnd) + len(boundary)
         mhtml = mhtml[realStart:].lstrip()
-        with open('/tmp/log2.txt', 'w') as f:
-            f.write(mhtml)
-            f.flush()
         if not boundary:
             raise Exception('boundary should not be empty')
         while True:
