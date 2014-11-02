@@ -4,11 +4,17 @@
 from BaseHTTPServer import HTTPServer, BaseHTTPRequestHandler
 from SocketServer import ThreadingMixIn
 import threading
-import cgi, StringIO, base64, os, sys
+import cgi, StringIO, base64, os, sys, locale
 
 def parseNext(content, boundary):
     end = content.find(boundary)
     return content[0 : end], content[end + len(boundary) : ].lstrip()
+
+def toPreferred(s):
+    if 'utf-8' == locale.getpreferredencoding():
+        return s
+    ret = s.decode('utf-8').encode(locale.getpreferredencoding())
+    return ret
 
 def parseContent(content):
     fp = StringIO.StringIO(content)
@@ -42,6 +48,8 @@ def save(path, base64Data, title):
     lastSlash = path.rfind('/')
     if lastSlash != -1:
         path = path[lastSlash + 1:]
+    title = toPreferred(title)
+    path = toPreferred(path)
     if os.path.exists(title) :
         if not os.path.isdir(title):
             print >>sys.stderr, "file exists and stop the saving: " + title
@@ -72,7 +80,7 @@ class Handler(BaseHTTPRequestHandler):
         if 'title' in form and form['title']:
             title = form['title']
             title = ''.join(title)
-            print title
+            print toPreferred(title)
         mhtml = ''.join(form['mhtml'])
 
         boundaryKeyword = 'boundary='
