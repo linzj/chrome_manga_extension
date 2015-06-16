@@ -10,11 +10,17 @@ def parseNext(content, boundary):
     end = content.find(boundary)
     return content[0 : end], content[end + len(boundary) : ].lstrip()
 
+def filterOutIllegal(mystr):
+   start = mystr.find('/')
+   if start != -1:
+       return mystr[:start]
+   return mystr
+
 def toPreferred(s):
     if 'utf-8' == locale.getpreferredencoding():
         return s
     ret = s.decode('utf-8').encode(locale.getpreferredencoding())
-    return ret
+    return filterOutIllegal(ret)
 
 def parseContent(content):
     fp = StringIO.StringIO(content)
