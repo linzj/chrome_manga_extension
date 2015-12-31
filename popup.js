@@ -1,8 +1,8 @@
-var shouldClose = 0
+var shouldClose = 0;
 
 function closeWindow(){
     if((--shouldClose) == 0) {
-        window.close()
+        window.close();
     }
 }
 
@@ -10,9 +10,10 @@ function clickHandler(e) {
 
     chrome.runtime.getBackgroundPage(function (backgroundWindow) {
         backgroundWindow.start();
-        closeWindow()
+        closeWindow();
     })
-    shouldClose++
+    shouldClose++;
+    document.querySelector('#start').disabled = true;
 }
 
 
@@ -20,5 +21,5 @@ function clickHandler(e) {
 // `DOMContentLoaded` event on the document, and adding your listeners to
 // specific elements when it triggers.
 document.addEventListener('DOMContentLoaded', function () {
-    document.querySelector('#myshit').addEventListener('click', clickHandler);
+    document.querySelector('#start').addEventListener('click', clickHandler);
 });
