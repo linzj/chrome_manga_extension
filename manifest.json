@@ -9,12 +9,12 @@
        "page": "background.html",
        "persistent": false
    },
-   "description": "download manga using chrome",
+   "description": "download image from lofter",
    "icons": {
-      "48": "images/icon48.png"
+      "48": "images/icon32.png"
    },
   
-   "name": "Manga Crawler",
+   "name": "Lofter Downloader",
    "permissions": [ "tabs", "http://*/*", "https://*/*", "storage", "pageCapture" ],   
    "version": "0.1"
 }
