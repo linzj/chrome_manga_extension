@@ -231,7 +231,7 @@ NextPage.prototype = {
         }.bind(this)
         chrome.tabs.onUpdated.addListener(object.listener);
         chrome.tabs.executeScript(this.tabId,{ "file":"nextPageInjectCode.js"},function() {
-            chrome.tabs.executeScript(object.tabId,{"code":"___mynextPage(\"" + object.bootAttr.nextPageQuery + "\");","runAt":"document_end"},function(){
+            chrome.tabs.executeScript(object.tabId,{"code":"___mynextPage(\'" + object.bootAttr.nextPageQuery + "\');","runAt":"document_end"},function(){
                 if (!object.shouldNotStartTimer)
                     object.startTimer()
             })
