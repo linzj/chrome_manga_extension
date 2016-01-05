@@ -295,12 +295,12 @@ ModifyPage.prototype = {
                     // console.log('ModifyPage.modify: start timer to test if modified page is ready. title: ' + this.bootAttr.title)
                     var thisFunction = function () {
                          chrome.tabs.sendMessage(this.tabId, {}, function (respond) {
-                             if (respond) {
-                                 // console.log('ModifyPage.modify.respond. title: ' + this.bootAttr.title)
+                             if (respond == 0) {
+                                 console.log('ModifyPage.modify.respond. title: ' + this.bootAttr.title)
                                  this.nextStep()
                              } else {
                                  // retry
-                                 // console.log('ModifyPage.modify.retry timer. title: ' + this.bootAttr.title)
+                                 console.log('ModifyPage.modify.retry timer. title: ' + this.bootAttr.title + '; respond: ' + respond);
                                  setTimeout(thisFunction, 250);
                              }
                          }.bind(this));

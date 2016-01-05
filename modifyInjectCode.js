@@ -34,6 +34,7 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendRespond) {
     next.style.float = 'right'
     body.appendChild(next) 
     window.__modify__okay__ = false
+    window.imgCount = 0;
     // append img node 
     for(var i = 0; i < urls.length; ++i) {
         var url = urls[i]
@@ -42,13 +43,20 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendRespond) {
         img.id = i
         img.style.display = 'none'
         body.appendChild(img)
-        imgCount++
+        window.imgCount++
         img.addEventListener('load', function () {
-            imgCount--;
-            if (imgCount == 0) {
+            window.imgCount--;
+            if (window.imgCount == 0) {
                 window.__modify__okay__ = true
             }
-        })
+        });
+        img.addEventListener('error', function () {
+            window.imgCount--;
+            if (window.imgCount == 0) {
+                window.__modify__okay__ = true
+            }
+            window.body.removeChild(img);
+        });
     }
     document.getElementById('0').style.display = 'block'
     // add another script tag to change next & previous 
@@ -60,6 +68,6 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendRespond) {
     chrome.runtime.onMessage.removeListener(arguments.callee)
     sendRespond('okay')
     chrome.runtime.onMessage.addListener(function (message, sender, sendRespond2) {
-        sendRespond2(window.__modify__okay__)
+        sendRespond2(window.imgCount)
     })
 })
