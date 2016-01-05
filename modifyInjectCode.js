@@ -33,7 +33,6 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendRespond) {
     next.id = 'next'
     next.style.float = 'right'
     body.appendChild(next) 
-    window.__modify__okay__ = false
     window.imgCount = 0;
     // append img node 
     for(var i = 0; i < urls.length; ++i) {
@@ -46,15 +45,9 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendRespond) {
         window.imgCount++
         img.addEventListener('load', function () {
             window.imgCount--;
-            if (window.imgCount == 0) {
-                window.__modify__okay__ = true
-            }
         });
         img.addEventListener('error', function () {
             window.imgCount--;
-            if (window.imgCount == 0) {
-                window.__modify__okay__ = true
-            }
             window.body.removeChild(img);
         });
     }

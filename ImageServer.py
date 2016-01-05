@@ -67,6 +67,11 @@ def save(path, base64Data, title):
     with open(filePath, 'wb') as f:
         f.write(base64.b64decode(base64Data))
 
+def reconfigurePath(path, indx):
+    path, ext = os.path.splitext(path)
+    if not ext:
+        return path
+    return '%03d%s' % (indx, ext)
 
 class Handler(BaseHTTPRequestHandler):
 
@@ -98,11 +103,13 @@ class Handler(BaseHTTPRequestHandler):
         mhtml = mhtml[realStart:].lstrip()
         if not boundary:
             raise Exception('boundary should not be empty')
+        indx = 1;
         while True:
             content, mhtml = parseNext(mhtml, boundary)
             base64Data, path = parseContent(content)
             if path and base64:
-                save(path, base64Data, title)
+                save(reconfigurePath(path, indx), base64Data, title)
+                indx += 1
             if not mhtml or mhtml.rstrip() == '--':
                 break
 
