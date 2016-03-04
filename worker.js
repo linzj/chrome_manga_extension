@@ -9,7 +9,7 @@ function postreq() {
     if (this.readyState != 4) {
         return;
     }
-    console.log('post ' + this._href + ' okay.');
+    // console.log('post ' + this._href + ' okay.');
     this._ctx.imghrefSet.add(this._hrefImg);
     this._ctx.downReq();
 };
@@ -25,7 +25,7 @@ function getrequest() {
     if (this.readyState != 4) {
         return;
     }
-    console.log('download ' + this._href + ' okay.');
+    // console.log('download ' + this._href + ' okay.');
     var href = 'http://127.0.0.1:8787/';
     var lastSlash = this._href.lastIndexOf("/");
     if (lastSlash == -1) {
@@ -38,7 +38,7 @@ function getrequest() {
         }
         href += path;
     }
-    console.log('posting href: ' + href);
+    // console.log('posting href: ' + href);
     var request = new XMLHttpRequest();
     request.open('post', href);
     request.responseType = 'text';
@@ -54,6 +54,8 @@ function TabController() {
     this.reqcount = 0;
     this.namecount = 0;
     this.imghrefSet = new Set();
+    this.updateListener = null;
+    this.shouldFetch = false;
 }
 
 TabController.prototype = {
@@ -63,6 +65,16 @@ TabController.prototype = {
                 var tab = tabs[0];
                 this.boot_(tab.id);
         }.bind(this));
+        if (this.updateListener == null) {
+            this.updateListener = function (tabId, changeInfo, tab) {
+                if (tabId == this.tabId && changeInfo.hasOwnProperty("status")) {
+                    if(changeInfo.status === "complete") {
+                        this.onTabCompleted();
+                    }
+                }
+            }.bind(this)
+            chrome.tabs.onUpdated.addListener(this.updateListener);
+        }
     },
     boot_ : function(tabId) {
             this.tabId = tabId;
@@ -86,7 +98,7 @@ TabController.prototype = {
                     continue;
                 }
                 var request = new XMLHttpRequest();
-                console.log('send one request: ', href);
+                // console.log('send one request: ', href);
                 request.open('get', href);
                 request.responseType = 'blob';
                 request._href = href;
@@ -100,9 +112,14 @@ TabController.prototype = {
     },
     nextpage: function() {
         console.log('next page.');
-        chrome.tabs.executeScript(this.tabId, {"allFrames": false ,"file": "nextpage.js", "runAt": "document_end"},function () {
-                setTimeout(this.fetch.bind(this), 1000);
-        }.bind(this));
+        this.shouldFetch = true;
+        chrome.tabs.executeScript(this.tabId, {"allFrames": false ,"file": "nextpage.js", "runAt": "document_end"}, function() {
+        });
+    },
+    onTabCompleted: function() {
+        console.log('onTabCompleted');
+        this.shouldFetch = false;
+        this.fetch();
     }
 }
 
