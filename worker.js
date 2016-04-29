@@ -109,6 +109,9 @@ TabController.prototype = {
                 this.reqcount++;
             }
             console.log('fetch script executed : this.reqcount: ' + this.reqcount);
+            if (this.reqcount == 0) {
+                this.nextpage();
+            }
         }.bind(this));
     },
     nextpage: function() {
