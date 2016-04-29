@@ -55,7 +55,7 @@ function TabController() {
     this.namecount = 0;
     this.imghrefSet = new Set();
     this.updateListener = null;
-    this.shouldFetch = false;
+    this.shouldFetch = true;
 }
 
 TabController.prototype = {
@@ -75,6 +75,7 @@ TabController.prototype = {
             }.bind(this)
             chrome.tabs.onUpdated.addListener(this.updateListener);
         }
+        setTimeout(this.fetchIfNeeded.bind(this), 2000);
     },
     boot_ : function(tabId) {
             this.tabId = tabId;
@@ -88,7 +89,7 @@ TabController.prototype = {
     fetch: function() {
         chrome.tabs.executeScript(this.tabId, {"allFrames": false ,"file": "fetchImage.js", "runAt": "document_end"},function (hrefs) {
             hrefs = hrefs[0];
-            if (typeof hrefs == "string") {
+            if (hrefs.length == 0) {
                 setTimeout(this.fetch.bind(this), 1000);
                 return;
             }
@@ -114,12 +115,18 @@ TabController.prototype = {
         console.log('next page.');
         this.shouldFetch = true;
         chrome.tabs.executeScript(this.tabId, {"allFrames": false ,"file": "nextpage.js", "runAt": "document_end"}, function() {
-        });
+            setTimeout(this.fetchIfNeeded.bind(this), 2000);
+        }.bind(this));
     },
     onTabCompleted: function() {
         console.log('onTabCompleted');
-        this.shouldFetch = false;
-        this.fetch();
+        this.fetchIfNeeded();
+    },
+    fetchIfNeeded: function() {
+        if (this.shouldFetch) {
+            this.shouldFetch = false;
+            this.fetch();
+        }
     }
 }
 
