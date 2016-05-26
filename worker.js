@@ -28,6 +28,7 @@ function getrequest() {
     // console.log('download ' + this._href + ' okay.');
     var href = 'http://127.0.0.1:8787/';
     var lastSlash = this._href.lastIndexOf("/");
+    var ctx = this._ctx;
     if (lastSlash == -1) {
         href += "" + (ctx.namecount++);
     } else {
