@@ -80,6 +80,13 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(message)
         self.wfile.write('\n')
         return
+    def do_OPTIONS(self):
+        self.send_response(200)
+        self.send_header('Access-Control-Allow-Origin', '*')
+        self.send_header('Access-Control-Allow-Headers', self.headers.getheader('Access-Control-Request-Headers'))
+        self.send_header('Access-Control-Allow-Methods', 'POST,OPTIONS')
+        self.end_headers()
+        return
     def saveInput(self, data):
         path = self.path
         path = path[1:]
