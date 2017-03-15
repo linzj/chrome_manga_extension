@@ -37,7 +37,12 @@ function getrequest() {
         if (firstQuestion != -1) {
             path = path.substring(0, firstQuestion);
         }
-        href += path;
+        var dot = path.lastIndexOf(".");
+        var ext = ".jpg";
+        if (dot != -1) {
+            ext = path.substring(dot)
+        }
+        href += "" + (ctx.namecount++) + ext;
     }
     // console.log('posting href: ' + href);
     var request = new XMLHttpRequest();
@@ -57,6 +62,7 @@ function TabController() {
     this.imghrefSet = new Set();
     this.updateListener = null;
     this.shouldFetch = true;
+    this.retrycount = 0;
 }
 
 TabController.prototype = {
@@ -88,10 +94,15 @@ TabController.prototype = {
         }
     },
     fetch: function() {
+        if (this.retrycount == 5) {
+            this.nextpage();
+            return;
+        }
         chrome.tabs.executeScript(this.tabId, {"allFrames": false ,"file": "fetchImage.js", "runAt": "document_end"},function (hrefs) {
             hrefs = hrefs[0];
             if (hrefs.length == 0) {
                 setTimeout(this.fetch.bind(this), 1000);
+                this.retrycount++;
                 return;
             }
             for (i = 0; i < hrefs.length; ++i) {
@@ -118,6 +129,7 @@ TabController.prototype = {
     nextpage: function() {
         console.log('next page.');
         this.shouldFetch = true;
+        this.retrycount = 0;
         chrome.tabs.executeScript(this.tabId, {"allFrames": false ,"file": "nextpage.js", "runAt": "document_end"}, function() {
             setTimeout(this.fetchIfNeeded.bind(this), 2000);
         }.bind(this));
