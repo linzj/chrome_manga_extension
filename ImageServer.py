@@ -4,7 +4,7 @@
 from BaseHTTPServer import HTTPServer, BaseHTTPRequestHandler
 from SocketServer import ThreadingMixIn
 import threading
-import cgi, StringIO, base64, os, sys, locale
+import cgi, StringIO, base64, os, sys, locale, re
 
 def parseNext(content, boundary):
     end = content.find(boundary)
@@ -50,6 +50,24 @@ def parseContent(content):
         return data, path
     return None, None
 
+pathPattern = re.compile('^(\d+)(\.\w+)')
+numNow = 0
+def retryTillOkay(path):
+    global numNow
+    m = pathPattern.match(path)
+    if not m:
+        return None
+    num = int(m.group(1))
+    ext = m.group(2)
+    num = max(num, numNow)
+    while True:
+        filePath = str(num) + ext
+        if not os.path.exists(filePath):
+            break
+        num += 1
+    numNow = num + 1
+    return filePath
+
 def save(path, base64Data, title):
     lastSlash = path.rfind('/')
     if lastSlash != -1:
@@ -90,6 +108,10 @@ class Handler(BaseHTTPRequestHandler):
     def saveInput(self, data):
         path = self.path
         path = path[1:]
+        if os.path.exists(path) :
+            path = retryTillOkay(path)
+        if not path:
+            return False
         with open(path, 'wb') as f:
             f.write(data)
 
