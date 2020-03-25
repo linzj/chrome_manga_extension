@@ -93,6 +93,7 @@ class Handler(BaseHTTPRequestHandler):
         contentLength = int(self.headers.getheader('content-length'))
         self.saveInput(self.rfile.read(contentLength))
         self.send_response(200)
+        self.send_header('Access-Control-Allow-Origin', '*')
         self.end_headers()
         message =  threading.currentThread().getName()
         self.wfile.write(message)
