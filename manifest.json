@@ -12,7 +12,8 @@
    "content_scripts": [
      {
        "matches": ["*://*.youtube.com/*"],
-       "js": ["contentscript.js"]
+       "js": ["contentscript.js"],
+       "run_at": "document_start"
      }
    ],
    "description": "download video from youtube",
