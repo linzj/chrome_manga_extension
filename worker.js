@@ -1,4 +1,4 @@
-function postreq() {
+`function postreq() {
     if (this.readyState >=2) {
         if (this.status != 200) {
             console.error('cancled href: ' + this._href + '; status code: ' + this.status);
@@ -149,3 +149,4 @@ TabController.prototype = {
 function start() {
     new TabController().boot();
 }
+`

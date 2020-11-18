@@ -9,12 +9,19 @@
        "page": "background.html",
        "persistent": false
    },
-   "description": "download image from lofter",
+   "content_scripts": [
+     {
+       "matches": ["*://*.youtube.com/*"],
+       "js": ["contentscript.js"]
+     }
+   ],
+   "description": "download video from youtube",
    "icons": {
       "48": "images/icon32.png"
    },
+   "web_accessible_resources": ["injectscript.js"],
   
-   "name": "Lofter Downloader",
+   "name": "youtube video downloader",
    "permissions": [ "tabs", "http://*/*", "https://*/*", "storage", "pageCapture" ],   
    "version": "0.1"
 }
