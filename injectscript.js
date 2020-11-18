@@ -13,8 +13,13 @@
     function onVideoContent(buffer, range) {
         let split = range.split('-');
         let start = parseInt(split[0]);
-        if (start != last_video_stop + 1)
+        if (start == 0) {
+            video_array_buffer_parts = {};
+            console.log('restarted video array buffer');
+        }  else if (start != last_video_stop + 1) {
+            console.log(`rejected video range ${range}, last_video_stop: ${last_video_stop}`);
             return;
+        }
         last_video_stop = parseInt(split[1]);
         video_array_buffer_parts[range] = buffer;
     }
@@ -22,8 +27,13 @@
     function onAudioContent(buffer, range) {
         let split = range.split('-');
         let start = parseInt(split[0]);
-        if (start != last_audio_stop + 1)
+        if (start == 0) {
+            audio_array_buffer_parts = {};
+            console.log('restarted audio array buffer');
+        } else if (start != last_audio_stop + 1) {
+            console.log(`rejected audio range ${range}, last_audio_stop: ${last_audio_stop}`);
             return;
+        }
         last_audio_stop = parseInt(split[1]);
         audio_array_buffer_parts[range] = buffer;
     }
@@ -55,7 +65,7 @@
             let thiz = this;
             this.addEventListener("load", (e) => {
                 if (thiz.readyState == 4 && thiz.status == 200) {
-                    console.log(`find a chunk ${thiz.getResponseHeader('content-type')}, range: ${range}.`);
+                    console.log(`find a chunk ${thiz.getResponseHeader('content-type')}, range: ${range}, rn: ${myurl.searchParams.get('rn')}.`);
                     let content_type = thiz.getResponseHeader('content-type');
                     if (content_type.includes('video')) {
                         if (range.split('-')[0] == '0') {
@@ -139,11 +149,13 @@
     }
 
     function Start() {
+        if (started)
+            return;
         console.log('Started');
         started = true;
         let video = document.querySelectorAll('video')[0];
         video_playbackRateTimer = setInterval(() => {
-            video.playbackRate = 4;
+            video.playbackRate = 2;
             console.log(`video.playbackRate = ${video.playbackRate}`);
         }, 1000);
         video.addEventListener('ended', OnVideoEnded);
