@@ -81,6 +81,8 @@
         video.addEventListener('ended', (e) => {
             SaveData('video', video_array_buffer_parts);
             SaveData('audio', audio_array_buffer_parts);
+            video_array_buffer_parts = []
+            audio_array_buffer_parts = []
         });
     });
 })();
