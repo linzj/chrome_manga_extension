@@ -6,6 +6,7 @@ from SocketServer import ThreadingMixIn
 import threading
 import cgi, StringIO, base64, os, sys, locale, re, io
 import os.path
+from urllib import unquote
 
 class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
@@ -30,6 +31,7 @@ class Handler(BaseHTTPRequestHandler):
     def saveInput(self, data, _range):
         path = self.path
         path = path[1:]
+        path = unquote(path)
         print('saving file {0} in range: {1}, len: {2}'.format(path, str(_range), len(data)))
         mode = 'r+b'
         if not os.path.exists(path):
