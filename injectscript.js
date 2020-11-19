@@ -11,6 +11,12 @@
     let last_audio_stop = -1;
     let title = undefined;
 
+    function GetTitle() {
+        if (!title) {
+            title = document.title;
+        }
+    }
+
     async function FlushBuffer(parts, type, media_type) {
         Object.keys(parts).forEach(async (k) => {
             let buffer = parts[k];
@@ -38,9 +44,7 @@
         // }
         last_video_stop = parseInt(split[1]);
         video_array_buffer_parts[range] = buffer;
-        if (!title) {
-            title = document.title;
-        }
+        GetTitle();
         if (title) {
             FlushBuffer(video_array_buffer_parts, "video", video_media_type);
             video_array_buffer_parts = {};
@@ -161,7 +165,7 @@
             return;
         console.log('Started');
         started = true;
-        title = document.title;
+        GetTitle();
         let video = document.querySelectorAll('video')[0];
         video_playbackRateTimer = setTimeout(() => {
             console.log(`video.playbackRate = ${video.playbackRate}`);
