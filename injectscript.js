@@ -9,8 +9,9 @@
     let started = false;
     let last_video_stop = -1;
     let last_audio_stop = -1;
+    let title = document.title;
 
-    function onVideoContent(buffer, range) {
+    async function onVideoContent(buffer, range) {
         let split = range.split('-');
         let start = parseInt(split[0]);
         if (start != last_video_stop + 1) {
@@ -18,10 +19,21 @@
             return;
         }
         last_video_stop = parseInt(split[1]);
-        video_array_buffer_parts[range] = buffer;
+        let response = await fetch(`http://localhost:8787/${title}_video.${video_media_type}`, {
+            body: buffer,
+            headers: {
+                'Content-Type': `application/${video_media_type}`,
+                'Range': range
+            },
+            cache: 'no-cache',
+            credentials: 'omit',
+            method: 'POST',
+            mode: 'cors',
+            referer: 'no-referer'
+        });
     }
 
-    function onAudioContent(buffer, range) {
+    async function onAudioContent(buffer, range) {
         let split = range.split('-');
         let start = parseInt(split[0]);
         if (start != last_audio_stop + 1) {
@@ -29,7 +41,18 @@
             return;
         }
         last_audio_stop = parseInt(split[1]);
-        audio_array_buffer_parts[range] = buffer;
+        let response = await fetch(`http://localhost:8787/${title}_audio.${audio_media_type}`, {
+            body: buffer,
+            headers: {
+                'Content-Type': `application/${audio_media_type}`,
+                'Range': range
+            },
+            cache: 'no-cache',
+            credentials: 'omit',
+            method: 'POST',
+            mode: 'cors',
+            referer: 'no-referer'
+        });
     }
 
     function mayChangeMediaType(content_type, old_media_type) {
@@ -96,7 +119,7 @@
         let last_range = undefined;
         sorted_keys.forEach((k) => {
             const current_split = k.split('-');
-            const current_range = [ parseInt(current_split[0]), parseInt(current_split[1])];
+            const current_range = [parseInt(current_split[0]), parseInt(current_split[1])];
             if (last_range) {
                 if (last_range[1] + 1 != current_range[0])
                     console.log(`detected gaps at [${last_range[0]}, ${last_range[1]}) and [${current_range[0]}, ${current_range[1]})`);
@@ -120,25 +143,9 @@
         return result;
     }
 
-    function SaveData(type, data, media_type) {
-        let array_buffer = concatenate(data);
-        console.log(`${type} size: ${array_buffer.byteLength}`);
-        let array_blob = new Blob([array_buffer.buffer], {
-            type: `application/${media_type}`
-        });
-        let object_url = URL.createObjectURL(array_blob);
-        let a = document.createElement('a');
-        a.href = object_url;
-        a.setAttribute('download', `${type}.${media_type}`);
-        document.body.append(a);
-        a.click();
-        a.remove();
-    }
 
     function OnVideoEnded(e) {
         console.log('OnVideoEnded');
-        SaveData('video', video_array_buffer_parts, video_media_type);
-        SaveData('audio', audio_array_buffer_parts, audio_media_type);
         Reset();
     }
 
@@ -169,6 +176,6 @@
         audio_media_type = "webm";
         clearInterval(video_playbackRateTimer);
         let video = document.querySelectorAll('video')[0];
-        video?.removeEventListener('ended', OnVideoEnded);
+        video.removeEventListener('ended', OnVideoEnded);
     }
 })();

@@ -4,94 +4,15 @@
 from BaseHTTPServer import HTTPServer, BaseHTTPRequestHandler
 from SocketServer import ThreadingMixIn
 import threading
-import cgi, StringIO, base64, os, sys, locale, re
-
-def parseNext(content, boundary):
-    end = content.find(boundary)
-    return content[0 : end], content[end + len(boundary) : ].lstrip()
-
-def filterOutIllegal(mystr):
-   start = mystr.find('/')
-   if start != -1:
-       return mystr[:start]
-   return mystr
-
-def toPreferred(s):
-    if 'utf-8' == locale.getpreferredencoding():
-        return s
-    ret = s.decode('utf-8').encode(locale.getpreferredencoding())
-    return filterOutIllegal(ret)
-
-def parseContent(content):
-    fp = StringIO.StringIO(content)
-    save = False
-    path = None
-
-    while True:
-        line = fp.readline()
-        if not line:
-            break
-        line = line.strip()
-        if not line:
-            break
-        splitPoint = line.find(':')
-        if splitPoint == -1:
-            raise Exception('parseContent: splitPoint == -1: line: ' + line)
-        key = line[ 0 : splitPoint]
-        value = line[ splitPoint + 1 :]
-        if key == 'Content-Transfer-Encoding':
-            value = value.lstrip()
-            if value == 'base64':
-                save = True
-        if key == 'Content-Location':
-            path = value.lstrip()
-    data = fp.read()
-    if save:
-        return data, path
-    return None, None
-
-pathPattern = re.compile('^(\d+)(\.\w+)')
-numNow = 0
-def retryTillOkay(path):
-    global numNow
-    m = pathPattern.match(path)
-    if not m:
-        return None
-    num = int(m.group(1))
-    ext = m.group(2)
-    num = max(num, numNow)
-    while True:
-        filePath = str(num) + ext
-        if not os.path.exists(filePath):
-            break
-        num += 1
-    numNow = num + 1
-    return filePath
-
-def save(path, base64Data, title):
-    lastSlash = path.rfind('/')
-    if lastSlash != -1:
-        path = path[lastSlash + 1:]
-    title = toPreferred(title)
-    path = toPreferred(path)
-    if os.path.exists(title) :
-        if not os.path.isdir(title):
-            print >>sys.stderr, "file exists and stop the saving: " + title
-            return False
-    else:
-        os.mkdir(title)
-
-    filePath = title + os.sep + path
-    with open(filePath, 'wb') as f:
-        f.write(base64.b64decode(base64Data))
-
+import cgi, StringIO, base64, os, sys, locale, re, io
+import os.path
 
 class Handler(BaseHTTPRequestHandler):
-
     def do_POST(self):
         ctype, pdict = cgi.parse_header(self.headers.getheader('content-type'))
         contentLength = int(self.headers.getheader('content-length'))
-        self.saveInput(self.rfile.read(contentLength))
+        _range = self.headers.getheader('range')
+        self.saveInput(self.rfile.read(contentLength), _range)
         self.send_response(200)
         self.send_header('Access-Control-Allow-Origin', '*')
         self.end_headers()
@@ -106,14 +27,20 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header('Access-Control-Allow-Methods', 'POST,OPTIONS')
         self.end_headers()
         return
-    def saveInput(self, data):
+    def saveInput(self, data, _range):
         path = self.path
         path = path[1:]
-        if os.path.exists(path) :
-            path = retryTillOkay(path)
-        if not path:
-            return False
-        with open(path, 'wb') as f:
+        print('saving file {0} in range: {1}, len: {2}'.format(path, str(_range), len(data)))
+        mode = 'r+b'
+        if not os.path.exists(path):
+            mode = 'wb'
+        with io.open(path, mode) as f:
+            start = int(_range.split('-')[0])
+            seek_value = f.seek(start, 0)
+            if -1 == seek_value:
+                print('seek failed')
+                raise Exception('seek failed')
+            print('seeked to {0} or {1}'.format(str(f.tell()), str(seek_value)))
             f.write(data)
 
 
