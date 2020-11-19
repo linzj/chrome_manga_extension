@@ -9,8 +9,26 @@
     let started = false;
     let last_video_stop = -1;
     let last_audio_stop = -1;
-    let title = document.title;
+    let title = undefined;
 
+    async function FlushBuffer(parts, type, media_type) {
+        Object.keys(parts).forEach(async (k) => {
+            let buffer = parts[k];
+            let range = k;
+            let response = await fetch(`http://localhost:8787/${title}_${type}.${media_type}`, {
+                body: buffer,
+                headers: {
+                    'Content-Type': `application/${media_type}`,
+                    'Range': range
+                },
+                cache: 'no-cache',
+                credentials: 'omit',
+                method: 'POST',
+                mode: 'cors',
+                referer: 'no-referer'
+            });
+        });
+    }
     async function onVideoContent(buffer, range) {
         let split = range.split('-');
         let start = parseInt(split[0]);
@@ -19,18 +37,11 @@
             return;
         }
         last_video_stop = parseInt(split[1]);
-        let response = await fetch(`http://localhost:8787/${title}_video.${video_media_type}`, {
-            body: buffer,
-            headers: {
-                'Content-Type': `application/${video_media_type}`,
-                'Range': range
-            },
-            cache: 'no-cache',
-            credentials: 'omit',
-            method: 'POST',
-            mode: 'cors',
-            referer: 'no-referer'
-        });
+        video_array_buffer_parts[range] = buffer;
+        if (title) {
+            FlushBuffer(video_array_buffer_parts, "video", video_media_type);
+            video_array_buffer_parts = {};
+        }
     }
 
     async function onAudioContent(buffer, range) {
@@ -41,18 +52,11 @@
             return;
         }
         last_audio_stop = parseInt(split[1]);
-        let response = await fetch(`http://localhost:8787/${title}_audio.${audio_media_type}`, {
-            body: buffer,
-            headers: {
-                'Content-Type': `application/${audio_media_type}`,
-                'Range': range
-            },
-            cache: 'no-cache',
-            credentials: 'omit',
-            method: 'POST',
-            mode: 'cors',
-            referer: 'no-referer'
-        });
+        audio_array_buffer_parts[range] = buffer;
+        if (title) {
+            FlushBuffer(audio_array_buffer_parts, "audio", audio_media_type);
+            audio_array_buffer_parts = {};
+        }
     }
 
     function mayChangeMediaType(content_type, old_media_type) {
@@ -154,6 +158,7 @@
             return;
         console.log('Started');
         started = true;
+        title = document.title;
         let video = document.querySelectorAll('video')[0];
         video_playbackRateTimer = setTimeout(() => {
             console.log(`video.playbackRate = ${video.playbackRate}`);
@@ -174,6 +179,7 @@
         audio_array_buffer_parts = {};
         video_media_type = "webm";
         audio_media_type = "webm";
+        title = undefined;
         clearInterval(video_playbackRateTimer);
         let video = document.querySelectorAll('video')[0];
         video.removeEventListener('ended', OnVideoEnded);
