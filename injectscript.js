@@ -38,6 +38,9 @@
         // }
         last_video_stop = parseInt(split[1]);
         video_array_buffer_parts[range] = buffer;
+        if (!title) {
+            title = document.title;
+        }
         if (title) {
             FlushBuffer(video_array_buffer_parts, "video", video_media_type);
             video_array_buffer_parts = {};
