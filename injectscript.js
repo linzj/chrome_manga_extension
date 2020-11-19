@@ -32,10 +32,10 @@
     async function onVideoContent(buffer, range) {
         let split = range.split('-');
         let start = parseInt(split[0]);
-        if (start != last_video_stop + 1) {
-            console.log(`rejected video range ${range}, last_video_stop: ${last_video_stop}`);
-            return;
-        }
+        // if (start != last_video_stop + 1) {
+        //     console.log(`rejected video range ${range}, last_video_stop: ${last_video_stop}`);
+        //     return;
+        // }
         last_video_stop = parseInt(split[1]);
         video_array_buffer_parts[range] = buffer;
         if (title) {
@@ -47,10 +47,10 @@
     async function onAudioContent(buffer, range) {
         let split = range.split('-');
         let start = parseInt(split[0]);
-        if (start != last_audio_stop + 1) {
-            console.log(`rejected audio range ${range}, last_audio_stop: ${last_audio_stop}`);
-            return;
-        }
+        // if (start != last_audio_stop + 1) {
+        //     console.log(`rejected audio range ${range}, last_audio_stop: ${last_audio_stop}`);
+        //     return;
+        // }
         last_audio_stop = parseInt(split[1]);
         audio_array_buffer_parts[range] = buffer;
         if (title) {
