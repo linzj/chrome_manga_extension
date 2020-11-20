@@ -33,10 +33,11 @@ class Handler(BaseHTTPRequestHandler):
         path = path[1:]
         path = unquote(path)
         path = path.replace(':', "\xef\xbc\x9a")
+        path = path.decode('utf-8')
         mode = 'r+b'
         if not os.path.exists(path):
             mode = 'wb'
-        print('saving file {0} in range: {1}, len: {2} on mode {3}'.format(path, str(_range), len(data), mode))
+        print('saving file {0} in range: {1}, len: {2} on mode {3}'.format(path.encode(sys.getfilesystemencoding()), str(_range), len(data), mode))
         with io.open(path, mode) as f:
             start = int(_range.split('-')[0])
             seek_value = f.seek(start, 0)
