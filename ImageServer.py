@@ -32,12 +32,21 @@ class Handler(BaseHTTPRequestHandler):
         path = self.path
         path = path[1:]
         path = unquote(path)
-        path = path.replace(':', "\xef\xbc\x9a")
-        path = path.decode('utf-8')
+        if sys.platform == 'win32':
+            path = path.replace(':', "\xef\xbc\x9a")
+            path = path.replace('?', "_")
+            path = path.replace('<', "_")
+            path = path.replace('>', "_")
+            path = path.replace('"', "_")
+            path = path.replace('|', "_")
+            path = path.replace('\\', "_")
+            path = path.replace('\/', "_")
+            path = path.decode('utf-8')
+            path = path.encode(sys.getfilesystemencoding())
         mode = 'r+b'
         if not os.path.exists(path):
             mode = 'wb'
-        print('saving file {0} in range: {1}, len: {2} on mode {3}'.format(path.encode(sys.getfilesystemencoding()), str(_range), len(data), mode))
+        print('saving file {0} in range: {1}, len: {2} on mode {3}, encoding {4}'.format(path, str(_range), len(data), mode, sys.getfilesystemencoding()))
         with io.open(path, mode) as f:
             start = int(_range.split('-')[0])
             seek_value = f.seek(start, 0)
