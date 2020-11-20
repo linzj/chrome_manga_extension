@@ -7,8 +7,8 @@
     let audio_media_type = "webm";
     let video_playbackRateTimer = 0;
     let started = false;
-    let last_video_stop = -1;
-    let last_audio_stop = -1;
+    let last_video_stop = 0;
+    let last_audio_stop = 0;
     let title = undefined;
 
     function GetTitle() {
@@ -38,10 +38,10 @@
     async function onVideoContent(buffer, range) {
         let split = range.split('-');
         let start = parseInt(split[0]);
-        // if (start != last_video_stop + 1) {
-        //     console.log(`rejected video range ${range}, last_video_stop: ${last_video_stop}`);
-        //     return;
-        // }
+        if (start <= last_video_stop) {
+            console.log(`rejected video range ${range}, last_video_stop: ${last_video_stop}`);
+            return;
+        }
         last_video_stop = parseInt(split[1]);
         video_array_buffer_parts[range] = buffer;
         GetTitle();
@@ -54,10 +54,10 @@
     async function onAudioContent(buffer, range) {
         let split = range.split('-');
         let start = parseInt(split[0]);
-        // if (start != last_audio_stop + 1) {
-        //     console.log(`rejected audio range ${range}, last_audio_stop: ${last_audio_stop}`);
-        //     return;
-        // }
+        if (start <= last_audio_stop) {
+            console.log(`rejected audio range ${range}, last_audio_stop: ${last_audio_stop}`);
+            return;
+        }
         last_audio_stop = parseInt(split[1]);
         audio_array_buffer_parts[range] = buffer;
         if (title) {
@@ -180,8 +180,8 @@
 
     function Reset() {
         started = false;
-        last_video_stop = -1;
-        last_audio_stop = -1;
+        last_video_stop = 0;
+        last_audio_stop = 0;
         video_array_buffer_parts = {};
         audio_array_buffer_parts = {};
         video_media_type = "webm";
