@@ -38,7 +38,7 @@
     async function onVideoContent(buffer, range) {
         let split = range.split('-');
         let start = parseInt(split[0]);
-        if (start <= last_video_stop) {
+        if (start > last_video_stop + 1) {
             console.log(`rejected video range ${range}, last_video_stop: ${last_video_stop}`);
             return;
         }
@@ -54,7 +54,7 @@
     async function onAudioContent(buffer, range) {
         let split = range.split('-');
         let start = parseInt(split[0]);
-        if (start <= last_audio_stop) {
+        if (start > last_audio_stop + 1) {
             console.log(`rejected audio range ${range}, last_audio_stop: ${last_audio_stop}`);
             return;
         }
