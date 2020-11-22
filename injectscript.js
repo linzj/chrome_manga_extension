@@ -1,6 +1,8 @@
 (function() {
     let old_open = XMLHttpRequest.prototype.open;
-    let old_addEventListener = XMLHttpRequest.prototype.addEventListener;
+    let old_addSourceBuffer = MediaSource.prototype.addSourceBuffer;
+    let old_appendStream = SourceBuffer.prototype.appendStream;
+    let old_appendBuffer= SourceBuffer.prototype.appendBuffer;
     let video_array_buffer_parts = {};
     let audio_array_buffer_parts = {};
     let video_media_type = "webm";
@@ -116,6 +118,36 @@
         }
         return old_open.apply(this, arguments);
     }
+    // hook Media.addSourceBuffer;
+    function addSourceBuffer(type) {
+        console.log(`type: ${type}`);
+        let new_source_buffer = old_addSourceBuffer.apply(this, arguments);
+        new_source_buffer.type = type;
+        new_source_buffer.addEventListener('updateend', (e) => {
+            let info = `type: ${type}, buffered: [`;
+            for (let i = 0; i < new_source_buffer.buffered.length; ++i) {
+                info = info + `(${new_source_buffer.buffered.start(i)}, ${new_source_buffer.buffered.end(i)}), `
+            }
+            info = info + ']';
+            info = info + `; timestampOffset: ${new_source_buffer.timestampOffset}.`;
+            console.log(info);
+        });
+        return new_source_buffer;
+    }
+    MediaSource.prototype.addSourceBuffer = addSourceBuffer;
+    // hook SourceBuffer.prototype.appendStream
+    function appendStream(stream) {
+        console.log(`appending stream.`);
+        return old_appendStream.apply(this, arguments)
+    }
+    SourceBuffer.prototype.appendStream = appendStream;
+    // hook SourceBuffer.prototype.appendBuffer
+    function appendBuffer(ab) {
+        console.log(`appending ab length: ${ab.byteLength}.`);
+        return old_appendBuffer.apply(this, arguments)
+    }
+    SourceBuffer.prototype.appendBuffer = appendBuffer;
+
 
     function concatenate(arrays) {
         // Calculate byteSize from all arrays
