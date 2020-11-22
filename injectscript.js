@@ -144,6 +144,17 @@
     // hook SourceBuffer.prototype.appendBuffer
     function appendBuffer(ab) {
         console.log(`appending ab length: ${ab.byteLength}.`);
+        // fetch(`http://localhost:8787/${this.type.split('/')[0]}`, {
+        //     body: ab,
+        //     headers: {
+        //         'Content-Type': `${this.type}`,
+        //     },
+        //     cache: 'no-cache',
+        //     credentials: 'omit',
+        //     method: 'POST',
+        //     mode: 'cors',
+        //     referer: 'no-referer'
+        // });
         return old_appendBuffer.apply(this, arguments)
     }
     SourceBuffer.prototype.appendBuffer = appendBuffer;
