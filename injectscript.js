@@ -44,7 +44,9 @@
             console.log(`rejected video range ${range}, last_video_stop: ${last_video_stop}`);
             return;
         }
-        last_video_stop = parseInt(split[1]);
+        let video_stop = parseInt(split[1]);
+        if (video_stop > last_video_stop)
+            last_video_stop = video_stop;
         video_array_buffer_parts[range] = buffer;
         GetTitle();
         if (title) {
@@ -60,7 +62,9 @@
             console.log(`rejected audio range ${range}, last_audio_stop: ${last_audio_stop}`);
             return;
         }
-        last_audio_stop = parseInt(split[1]);
+        let audio_stop = parseInt(split[1]);
+        if (audio_stop > last_audio_stop)
+            last_audio_stop = audio_stop;
         audio_array_buffer_parts[range] = buffer;
         if (title) {
             FlushBuffer(audio_array_buffer_parts, "audio", audio_media_type);
