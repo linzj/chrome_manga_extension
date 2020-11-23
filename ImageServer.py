@@ -37,8 +37,8 @@ class Handler(BaseHTTPRequestHandler):
         mode = 'r+b'
         if not os.path.exists(path):
             mode = 'wb'
-        print('saving file {0} in range: {1}, len: {2} on mode {3}, encoding {4}'.format(path, str(_range), len(data), mode, sys.getfilesystemencoding()))
-        with io.open(path, mode) as f:
+        print('saving file {0} in range: {1}, len: {2} on mode {3}, pwd {4}'.format(path, str(_range), len(data), mode, os.getcwd()))
+        with open(path, mode) as f:
             start = int(_range.split('-')[0])
             seek_value = f.seek(start, 0)
             if -1 == seek_value:
@@ -62,6 +62,8 @@ class Handler(BaseHTTPRequestHandler):
             path = path.replace(b'\\', b"_")
             path = path.replace(b'\/', b"_")
             path = path.decode('utf-8')
+        if sys.platform == "linux":
+            path = path.replace("/", " or ")
         return path
 
     def prefixFromContentType(self, content_type):
