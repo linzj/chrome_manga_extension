@@ -60,7 +60,7 @@ class Handler(BaseHTTPRequestHandler):
             path = path.replace(b'"', b"_")
             path = path.replace(b'|', b"_")
             path = path.replace(b'\\', b"_")
-            path = path.replace(b'\/', b"_")
+            path = path.replace(b'/', b"_")
             path = path.decode('utf-8')
         if sys.platform == "linux":
             path = path.replace("/", " or ")
