@@ -11,13 +11,9 @@ from urllib.parse import unquote
 class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
         contentLength = int(self.headers['content-length'])
-        _range = self.headers['range']
+        seek_to_head = self.headers['Seek-To-Head']
         data = self.rfile.read(contentLength)
-        if _range:
-            self.saveInput(self.decodePath(), data, _range)
-        else:
-            #self.saveInput(self.decodePath() + self.prefixFromContentType(self.headers['content-type']), data, self.determineRangeFromData(data))
-            self.determineRangeFromData(data)
+        self.saveInput(self.decodePath(), data, seek_to_head)
 
         self.send_response(200)
         self.send_header('Access-Control-Allow-Origin', '*')
@@ -33,18 +29,12 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header('Access-Control-Allow-Methods', 'POST,OPTIONS')
         self.end_headers()
         return
-    def saveInput(self, path, data, _range):
-        mode = 'r+b'
-        if not os.path.exists(path):
+    def saveInput(self, path, data, seek_to_head):
+        mode = 'a+b'
+        if seek_to_head == "true":
             mode = 'wb'
-        print('saving file {0} in range: {1}, len: {2} on mode {3}, pwd {4}'.format(path, str(_range), len(data), mode, os.getcwd()))
+        print('saving file {0} seek_to_head: {1}, len: {2} on mode {3}, pwd {4}'.format(path, str(seek_to_head), len(data), mode, os.getcwd()))
         with open(path, mode) as f:
-            start = int(_range.split('-')[0])
-            seek_value = f.seek(start, 0)
-            if -1 == seek_value:
-                print('seek failed')
-                raise Exception('seek failed')
-            print('seeked to {0} or {1}'.format(str(f.tell()), str(seek_value)))
             f.write(data)
 
     def decodePath(self):
